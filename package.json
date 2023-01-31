@@ -27,7 +27,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && tsup src/cli.ts",
-    "build:dev": "tsc && vite build --mode development && tsup src/cli.ts",
     "preview": "vite preview"
   },
   "devDependencies": {

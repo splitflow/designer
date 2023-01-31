@@ -1,0 +1,82 @@
+{
+    "App-root": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-root": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-button": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-button:red": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-button:green": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-button:reset": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Nav-button:hover": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Body-root": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Body-title": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    },
+    "Body-feature": {
+        "layout": null,
+        "background": null,
+        "padding": null,
+        "border": null,
+        "corner": null,
+        "typography": null
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "type": 0.5,
+    "App-root": {
+        "layout": {
+            "direction": "column",
+            "mainAxisAlignment": "center",
+            "crossAxisAlignment": "center",
+            "spacing": 1
+        }
+    },
+    "Body-root": {
+        "layout": {
+            "direction": "column",
+            "mainAxisAlignment": "start",
+            "crossAxisAlignment": "center",
+            "spacing": 1
+        }
+    },
+    "Body-title": { "typography": { "fontSize": 1.75, "fontWeight": 400, "color": [0, 0, 0, 1] } },
+    "Nav-button": {
+        "padding": { "top": 0.25, "bottom": 0.25, "left": 0.5, "right": 0.5 },
+        "background": { "color": [0, 0, 92] }
+    },
+    "Nav-root": {
+        "layout": {
+            "direction": "row",
+            "mainAxisAlignment": "start",
+            "crossAxisAlignment": "stretch",
+            "spacing": 1
+        }
+    }
+}

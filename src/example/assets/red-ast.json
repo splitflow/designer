@@ -1,0 +1,57 @@
+{
+    "App-root": {
+        "layout": {
+            "direction": "row",
+            "mainAxisAlignment": "space-between",
+            "crossAxisAlignment": "stretch",
+            "spacing": 1
+        },
+        "background": { "color": [0, 50, 60] }
+    },
+    "type": [0, 50, 65],
+    "Nav-root": {
+        "layout": {
+            "direction": "column",
+            "mainAxisAlignment": "center",
+            "crossAxisAlignment": "stretch",
+            "spacing": 1
+        },
+        "padding": { "top": 1, "bottom": 1, "left": 1, "right": 1 }
+    },
+    "Nav-button": {
+        "padding": { "top": 0.5, "bottom": 0.5, "left": 1, "right": 1 },
+        "corner": { "topLeft": 1, "topRight": 1, "bottomLeft": 1, "bottomRight": 1 },
+        "layout": {
+            "direction": "row",
+            "mainAxisAlignment": "center",
+            "crossAxisAlignment": "stretch",
+            "spacing": 1
+        }
+    },
+    "Nav-button:red": {
+        "border": { "tickness": 0.2, "color": [0, 50, 40, 1] },
+        "typography": { "fontSize": 1, "fontWeight": 600, "color": [0, 50, 30, 1] }
+    },
+    "Nav-button:green": {
+        "border": { "tickness": 0.2, "color": [150, 50, 40, 1] },
+        "typography": { "fontSize": 1, "fontWeight": 600, "color": [150, 50, 30, 1] }
+    },
+    "Body-root": {
+        "padding": { "top": 16, "bottom": 4, "left": 4, "right": 4 },
+        "layout": {
+            "direction": "column",
+            "mainAxisAlignment": "start",
+            "crossAxisAlignment": "center",
+            "spacing": 1
+        }
+    },
+    "Body-title": { "typography": { "fontSize": 4, "fontWeight": 400, "color": [0, 0, 0, 1] } },
+    "Body-feature": {
+        "typography": { "fontSize": 1.25, "fontWeight": 400, "color": [0, 0, 0, 1] }
+    },
+    "Nav-button:reset": {
+        "border": { "tickness": 0.2, "color": [0, 0, 100] },
+        "typography": { "fontSize": 1, "fontWeight": 400, "color": [0, 0, 100] }
+    },
+    "Nav-button:hover": { "background": { "color": [0, 50, 65] } }
+}
