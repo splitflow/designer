@@ -11,30 +11,30 @@
 
 ## Demo and example
 
-Visit https://splitflow.io to play with the style editor or check the [example](/src/example/) page.
+Visit [splitflow.io](https://splitflow.io) to play with the style editor or check the [example](https://github.com/splitflow/designer/tree/master/src/example) page.
 
 ## Getting started
 
 ### Install SplitFlow
 
 ```
-npm install splitflow
+npm install @splitflow/designer
 ```
 
 ### Create the SplitFlow designer devtool
 
 ```ts
-import { initializeSplitflow } from 'splitflow'
-import { createSplitflowDevTool } from 'splitflow/devtool'
+import { initializeSplitflowApp } from '@splitflow/designer/app'
+import { createDesignerTool } from '@splitflow/designer'
 ...
-initializeSplitflow({ devtool: true })
-createSplitflowDevTool()
+initializeSplitflowApp({ devtool: true })
+createDesignerTool()
 ```
 
 ### Register your component classes
 
 ```ts
-import { style } from 'splitflow';
+import { style } from '@splitflow/designer/style';
 ...
 const s = style('MyComponentName');
 ...
@@ -60,7 +60,7 @@ Request a project id on https://splitflow.io/preview
 ### Initialize SplitFlow
 
 ```
-initializeSplitflow({ projectId: '<my-project-id>', devtool: true })
+initializeSplitflowApp({ projectId: '<my-project-id>', devtool: true })
 ```
 
 ## Going to production
@@ -70,12 +70,13 @@ initializeSplitflow({ projectId: '<my-project-id>', devtool: true })
 SplitFlow CLI allows to generate your app CSS.
 
 ```
-npx splitflow css --projectId=<my-project-id>
+npm install @splitflow/cli -D
+npx @splitflow/cli css --projectId=<my-project-id>
 ```
 
-Alternatively, you can create a `splitflow.config.json` and run `npx splitflow css`
+Alternatively, you can create a `splitflow.config.json` and run `npx @splitflow/cli css`
 
-```
+```json
 {
     "projectId": "<my-project-id>"
 }
@@ -83,9 +84,9 @@ Alternatively, you can create a `splitflow.config.json` and run `npx splitflow c
 
 ### Disable the designer devtool
 
-```
+```ts
 if (process.env.NODE_ENV === 'development')
-    initializeSplitflow({ devtool: true })
-    createSplitflowDevTool()
+    initializeSplitflowApp({ devtool: true })
+    createDesignerTool()
 }
 ```
