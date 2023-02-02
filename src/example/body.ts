@@ -1,4 +1,4 @@
-import { style } from '../lib'
+import { style } from '../lib/style'
 
 export default function Body() {
     const s = style('Body')

@@ -1,68 +1,46 @@
-import { importInternalDevTool } from './internal'
+import { importInternal } from './internal'
 
-interface Style {
-    [elementName: string]: (variants?: Variants) => string
+export interface DevToolOptions {
+    movable?: boolean
+    dark?: boolean
 }
 
-interface Variants {
-    [variantName: string]: boolean
+let destroyHandle: () => void
+
+export function isDesignerTool() {
+    return destroyHandle != null
 }
 
-let config: SplitflowConfig = {
-    projectId: null,
-    devtool: false
-}
+export function createDesignerTool(element?: Element, options?: DevToolOptions) {
+    if (!destroyHandle) {
+        const destroy = createDesignerToolInternal(element, options)
 
-export interface SplitflowConfig {
-    projectId?: string
-    devtool?: boolean
-}
-
-export function initializeSplitflow(configuration: SplitflowConfig) {
-    config = {
-        ...config,
-        ...configuration
-    }
-
-    if (config.devtool) {
-        importInternalDevTool().then(({ initializeSplitflow }) => initializeSplitflow(config))
-    }
-}
-
-export function style(componentName: string, register = true): Style {
-    return new Proxy(
-        {},
-        {
-            get: (_, elementName: string) => {
-                return (variants: Variants) => {
-                    register && config.devtool && registerInternal(componentName, elementName)
-                    if (variants) {
-                        Object.keys(variants).forEach((variantName) => {
-                            register &&
-                                config.devtool &&
-                                registerInternal(componentName, elementName, variantName)
-                        })
-                        return `${componentName}-${elementName} ${print(variants)}`
-                    }
-                    return `${componentName}-${elementName}`
-                }
-            }
-        }
-    )
-}
-
-function registerInternal(componentName: string, elementName: string, variantName?: string) {
-    importInternalDevTool().then(({ registerComponent }) =>
-        registerComponent(componentName, elementName, variantName)
-    )
-}
-
-function print(object: object) {
-    const result = []
-    for (let key of Object.keys(object)) {
-        if (object[key] === true) {
-            result.push(key)
+        destroyHandle = () => {
+            destroy()
+            destroyHandle = null
         }
     }
-    return result.join(' ')
+    return destroyHandle
+}
+
+function createDesignerToolInternal(element?: Element, options?: DevToolOptions) {
+    const destroy = importInternal().then(({ createDesignerTool }) =>
+        createDesignerTool(element, options)
+    )
+    return () => destroy.then((destroy) => destroy())
+}
+
+export function destroyDesignerTool() {
+    destroyHandle?.()
+}
+
+export function selectComponentInternal(component: any, element: any) {
+    importInternal().then(({ selectComponent, openMenu }) => {
+        openMenu('elements')
+        selectComponent(component, element)
+    })
+}
+
+export function playASTFragmentInternal(fragment: any) {
+    importInternal().then(({ playASTFragment }) => playASTFragment(fragment))
 }

@@ -1,12 +1,12 @@
-let importDevtoolPromise: Promise<any>
+let importInternalPromise: Promise<any>
 
-export function importInternalDevTool() {
+export function importInternal() {
     return (
-        importDevtoolPromise ||
+        importInternalPromise ||
         
-        (importDevtoolPromise = import(
+        (importInternalPromise = import(
             // @ts-ignore
-            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/designer.js'
         ))
     )
 }

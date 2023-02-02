@@ -1,5 +1,5 @@
-import { style } from '../lib'
-import { playASTFragmentInternal } from '../lib/devtool'
+import { style } from '../lib/style'
+import { playASTFragmentInternal } from '../lib'
 import greenAST from './assets/green-ast.json'
 import redAST from './assets/red-ast.json'
 import resetAST from './assets/reset-ast.json'

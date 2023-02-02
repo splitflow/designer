@@ -7,7 +7,8 @@ export default defineConfig({
         lib: {
             entry: {
                 index: './src/lib/index.ts',
-                devtool: './src/lib/devtool.ts'
+                app: './src/lib/app.ts',
+                style: './src/lib/style.ts'
             }
         }
     }

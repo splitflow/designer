@@ -1,14 +1,15 @@
 import './app.css'
-import { initializeSplitflow, style } from '../lib/index'
-import { createSplitflowDevTool } from '../lib/devtool'
+import { initializeSplitflowApp } from '../lib/app'
+import { style } from '../lib/style'
+import { createDesignerTool } from '../lib'
 import Body from './body'
 import Nav from './nav'
 
 function App() {
     const s = style('App')
 
-    initializeSplitflow({ devtool: true })
-    createSplitflowDevTool()
+    initializeSplitflowApp({ devtool: true })
+    createDesignerTool()
 
     return `
     <div class="${s.root()}">
