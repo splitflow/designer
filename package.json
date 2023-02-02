@@ -2,6 +2,15 @@
   "name": "@splitflow/designer",
   "version": "1.1.0",
   "description": "Splitflow designer tool",
+  "author": "team@splitflow.io",
+	"homepage": "https://github.com/splitflow/designer#readme",
+	"bugs": {
+		"url": "https://github.com/splitflow/designer/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/splitflow/designer.git"
+	},
   "type": "module",
   "files": [
     "dist/**.js",
