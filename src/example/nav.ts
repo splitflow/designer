@@ -1,15 +1,11 @@
-import { style } from '../lib/style'
 import { playASTFragmentInternal } from '../lib'
 import greenAST from './assets/green-ast.json'
 import redAST from './assets/red-ast.json'
 import resetAST from './assets/reset-ast.json'
 import clearAST from './assets/clear-ast.json'
+import { style } from './nav.sf'
 
 export default function Nav() {
-    const s = style('Nav')
-
-    playASTFragmentInternal(redAST)
-
     document.body.addEventListener('click', function (event: Event) {
         const element = event.target as HTMLElement
         if (element.id === 'red') {
@@ -25,10 +21,10 @@ export default function Nav() {
     })
 
     return `
-        <nav class=${s.root()}>
-            <button id="reset" class="${s.button({ reset: true })}">Reset</button>
-            <button id="red" class="${s.button({ red: true })}">Red</button>
-            <button id="green" class="${s.button({ green: true })}">Green</button>
+        <nav class=${style.root()}>
+            <button id="reset" class="${style.button({ reset: true })}">Reset</button>
+            <button id="red" class="${style.button({ red: true })}">Red</button>
+            <button id="green" class="${style.button({ green: true })}">Green</button>
         </nav>
     `
 }

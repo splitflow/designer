@@ -1,22 +1,21 @@
 import './app.css'
-import { initializeSplitflowApp } from '../lib/app'
-import { style } from '../lib/style'
+import splitflowApp from './splitflow'
 import { createDesignerTool } from '../lib'
 import Body from './body'
 import Nav from './nav'
+import { style } from './app.sf'
 
 function App() {
-    const s = style('App')
-
-    initializeSplitflowApp({ devtool: true })
-    createDesignerTool()
+    if (splitflowApp().devtool) {
+        createDesignerTool()
+    }
 
     return `
-    <div class="${s.root()}">
-        ${Nav()}
-        ${Body()}
-    </div>
-  `
+        <div class="${style.root()}">
+            ${Nav()}
+            ${Body()}
+        </div>
+    `
 }
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = App()

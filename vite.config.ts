@@ -8,7 +8,8 @@ export default defineConfig({
             entry: {
                 index: './src/lib/index.ts',
                 app: './src/lib/app.ts',
-                style: './src/lib/style.ts'
+                style: './src/lib/style.ts',
+                react: './src/lib/react.ts'
             }
         }
     }
