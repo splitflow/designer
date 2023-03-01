@@ -1,9 +1,9 @@
 import './app.css'
 import splitflowApp from './splitflow'
 import { createDesignerTool } from '../lib'
-import Body from './body'
-import Nav from './nav'
-import { style } from './app.sf'
+import Body from './Body'
+import Nav from './Nav'
+import { style } from './App.sf'
 
 function App() {
     if (splitflowApp().devtool) {

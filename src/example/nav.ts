@@ -3,7 +3,7 @@ import greenAST from './assets/green-ast.json'
 import redAST from './assets/red-ast.json'
 import resetAST from './assets/reset-ast.json'
 import clearAST from './assets/clear-ast.json'
-import { style } from './nav.sf'
+import { style } from './Nav.sf'
 
 export default function Nav() {
     document.body.addEventListener('click', function (event: Event) {

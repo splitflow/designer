@@ -1,4 +1,4 @@
-import { style } from './body.sf'
+import { style } from './Body.sf'
 
 export default function Body() {
     return `

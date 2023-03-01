@@ -1,4 +1,5 @@
 import { ASTToCSSVisitor, RootNode } from 'core/ast'
+import { styleToAST } from 'core/style'
 import { cssRule, stylesheet } from 'core/utils/dom'
 import { importInternal } from './internal'
 import { SplitflowStyleDef, StyleContext } from './style'
@@ -18,26 +19,16 @@ export function componentInjector(componentName: string) {
 }
 
 export function astFragmentInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => registerASTFragmentInternal(toASTFragment(componentName, styleDef))
+    return () => registerASTFragmentInternal(styleToAST(componentName, styleDef))
 }
 
 export function cssInjector(componentName: string, styleDef: SplitflowStyleDef) {
     return () => applyCSS(toCSS(componentName, styleDef), stylesheet('splitflow-style'))
 }
 
-function toASTFragment(componentName: string, styleDef: SplitflowStyleDef): RootNode {
-    return Object.entries(styleDef).reduce(
-        (ast, [elementName, definition]) => {
-            ast[componentName + '-' + elementName] = definition
-            return ast
-        },
-        { type: 'fragment' }
-    )
-}
-
 function toCSS(componentName: string, styleDef: SplitflowStyleDef) {
     const visitor = new ASTToCSSVisitor()
-    return visitor.root(toASTFragment(componentName, styleDef))
+    return visitor.root(styleToAST(componentName, styleDef))
 }
 
 function applyCSS(css: any, stylesheet: CSSStyleSheet) {

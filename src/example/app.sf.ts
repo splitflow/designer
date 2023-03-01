@@ -8,6 +8,8 @@ export const style = createStyle('App', {
             crossAxisAlignment: 'stretch',
             spacing: 1
         },
-        background: { color: [0, 50, 60] }
+        background: {
+            color: [0, 50, 60]
+        }
     }
 })
