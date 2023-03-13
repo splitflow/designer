@@ -29,7 +29,7 @@ function isCSSStyleDef(value: any): value is CSSStyleDef {
     return typeof property === 'string' || typeof property === 'function'
 }
 
-function isSplitflowStyleDev(value: any): value is SplitflowStyleDef {
+function isSplitflowStyleDef(value: any): value is SplitflowStyleDef {
     const property = value && Object.values(value)[0]
     return typeof property == 'object' && property !== null
 }
@@ -79,7 +79,7 @@ export function createStyle(arg1: unknown, arg2?: unknown): any {
         renderers.push(cssClassNameRenderer(root))
     }
 
-    if (typeof arg1 === 'string' && isSplitflowStyleDev(arg2)) {
+    if (typeof arg1 === 'string' && isSplitflowStyleDef(arg2)) {
         const componentName = arg1
         const root = arg2
 

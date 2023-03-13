@@ -1,4 +1,4 @@
-import { ASTToCSSVisitor, RootNode } from 'core/ast'
+import { ASTToCSSVisitor, cssProperyValue, RootNode } from 'core/ast'
 import { styleToAST } from 'core/style'
 import { cssRule, stylesheet } from 'core/utils/dom'
 import { importInternal } from './internal'
@@ -36,7 +36,8 @@ function applyCSS(css: any, stylesheet: CSSStyleSheet) {
         const rule = cssRule(stylesheet, selectorText)
         for (let [propertyName, value] of Object.entries(properties)) {
             if (value) {
-                rule.style.setProperty(propertyName, value)
+                const [propertyValue, propertyPriority] = cssProperyValue(value)
+                rule.style.setProperty(propertyName, propertyValue, propertyPriority)
             }
         }
     }
