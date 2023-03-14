@@ -1,4 +1,4 @@
-import { DefinitionNode } from 'core/ast'
+import { SplitflowStyleDef } from 'core/style'
 import app from './app'
 import { astFragmentInjector, componentInjector, cssInjector } from './injectors'
 import { classNameRenderer, cssClassNameRenderer } from './renderers'
@@ -14,10 +14,6 @@ export interface Variants {
 export interface StyleContext {
     elementName: string
     variants: Variants
-}
-
-export interface SplitflowStyleDef {
-    [definitionName: string]: DefinitionNode
 }
 
 export interface CSSStyleDef {
