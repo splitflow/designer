@@ -1,8 +1,8 @@
-import { ASTToCSSVisitor, cssProperyValue, RootNode } from 'core/ast'
-import { styleToAST } from 'core/style'
-import { cssRule, stylesheet } from 'core/utils/dom'
+import { ASTToCSSVisitor, cssProperyValue, RootNode } from '@splitflow/core/ast'
+import { SplitflowStyleDef, styleToAST } from '@splitflow/core/style'
+import { cssRule, stylesheet } from '@splitflow/core/utils/dom'
 import { importInternal } from './internal'
-import { SplitflowStyleDef, StyleContext } from './style'
+import { StyleContext } from './style'
 
 export function componentInjector(componentName: string) {
     return ({ elementName, variants }: StyleContext) => {

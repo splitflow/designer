@@ -74,6 +74,6 @@
     }
   },
   "dependencies": {
-    "core": "npm:@splitflow/core@^1.2.1"
+    "@splitflow/core": "^1.2.1"
   }
 }

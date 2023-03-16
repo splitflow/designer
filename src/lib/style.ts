@@ -1,4 +1,4 @@
-import { SplitflowStyleDef } from 'core/style'
+import { SplitflowStyleDef } from '@splitflow/core/style'
 import app from './app'
 import { astFragmentInjector, componentInjector, cssInjector } from './injectors'
 import { classNameRenderer, cssClassNameRenderer } from './renderers'
