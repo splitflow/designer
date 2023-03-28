@@ -4,6 +4,7 @@ import { createDesignerTool } from '../lib'
 import Body from './Body'
 import Nav from './Nav'
 import { style } from './App.sf'
+import { theme } from './Light.sft'
 
 function App() {
     if (splitflowApp().devtool) {
@@ -11,9 +12,11 @@ function App() {
     }
 
     return `
-        <div class="${style.root()}">
-            ${Nav()}
-            ${Body()}
+        <div class="${theme()}">
+            <div class="${style.root()}">
+                ${Nav()}
+                ${Body()}
+            </div>
         </div>
     `
 }

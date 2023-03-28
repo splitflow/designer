@@ -1,5 +1,6 @@
-import { ASTToCSSVisitor, cssProperyValue, RootNode } from '@splitflow/core/ast'
+import { ASTToCSSVisitor, cssProperyValue, RootNode as ASTRootNode } from '@splitflow/core/ast'
 import { SplitflowStyleDef, styleToAST } from '@splitflow/core/style'
+import { ThemeDataNode, ThemeToCSSVisitor, RootNode as ThemeRootNode } from '@splitflow/core/theme'
 import { cssRule, stylesheet } from '@splitflow/core/utils/dom'
 import { importInternal } from './internal'
 import { StyleContext } from './style'
@@ -22,13 +23,26 @@ export function astFragmentInjector(componentName: string, styleDef: SplitflowSt
     return () => registerASTFragmentInternal(styleToAST(componentName, styleDef))
 }
 
+export function themeFragmentInjector(themeName: string, themeData: ThemeDataNode) {
+    return () => registerThemeFragmentInternal({ type: 'snapshot', [themeName]: themeData })
+}
+
 export function cssInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => applyCSS(toCSS(componentName, styleDef), stylesheet('splitflow-style'))
+    return () => applyCSS(toCSS(componentName, styleDef), stylesheet('style'))
+}
+
+export function cssThemeInjector(themeName: string, themeData: ThemeDataNode) {
+    return () => applyCSS(themeToCSS(themeName, themeData), stylesheet('theme'))
 }
 
 function toCSS(componentName: string, styleDef: SplitflowStyleDef) {
     const visitor = new ASTToCSSVisitor()
     return visitor.root(styleToAST(componentName, styleDef))
+}
+
+function themeToCSS(themeName: string, themeData: ThemeDataNode) {
+    const visitor = new ThemeToCSSVisitor()
+    return visitor.root({ type: 'snapshot', [themeName]: themeData })
 }
 
 function applyCSS(css: any, stylesheet: CSSStyleSheet) {
@@ -57,6 +71,10 @@ function registerComponentInternal(
     )
 }
 
-function registerASTFragmentInternal(root: RootNode) {
+function registerASTFragmentInternal(root: ASTRootNode) {
     importInternal().then(({ registerASTFragment }) => registerASTFragment(root))
+}
+
+function registerThemeFragmentInternal(root: ThemeRootNode) {
+    importInternal().then(({ registerThemeFragment }) => registerThemeFragment(root))
 }

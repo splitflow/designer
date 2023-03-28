@@ -9,6 +9,7 @@ export default defineConfig({
                 index: './src/lib/index.ts',
                 app: './src/lib/app.ts',
                 style: './src/lib/style.ts',
+                theme: './src/lib/theme.ts',
                 react: './src/lib/react.ts'
             }
         }
