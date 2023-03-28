@@ -7,8 +7,10 @@ export type Theme = () => string
 export function createTheme(themeName: string, themeData?: ThemeDataNode) {
     const eagerInjectors = []
 
-    app().devtool && eagerInjectors.push(themeFragmentInjector(themeName, themeData))
-    !app().devtool && eagerInjectors.push(cssThemeInjector(themeName, themeData))
+    if (themeData) {
+        app().devtool && eagerInjectors.push(themeFragmentInjector(themeName, themeData))
+        !app().devtool && eagerInjectors.push(cssThemeInjector(themeName, themeData))
+    }
 
     eagerInjectors.forEach((injector) => injector())
 
