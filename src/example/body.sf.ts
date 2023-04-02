@@ -5,7 +5,7 @@ export const style = createStyle('Body', {
         typography: {
             fontSize: 1.25,
             fontWeight: 400,
-            color: [0, 0, 0, 1]
+            color: [0, 0, 0, 100]
         }
     },
     root: {
@@ -26,7 +26,7 @@ export const style = createStyle('Body', {
         typography: {
             fontSize: 4,
             fontWeight: 400,
-            color: [0, 0, 0, 1]
+            color: [0, 0, 0, 100]
         }
     }
 })

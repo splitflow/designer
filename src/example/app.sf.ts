@@ -9,7 +9,7 @@ export const style = createStyle('App', {
             spacing: 1
         },
         background: {
-            color: ['#background', '#background', '#background']
+            color: ['#background', '#background', '#background', '#background']
         }
     }
 })

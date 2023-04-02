@@ -1,6 +1,6 @@
 {
     "App-root": {
-        "background": { "color": [150, 50, 60] },
+        "background": { "color": [150, 50, 60, 100] },
         "layout": {
             "direction": "column",
             "mainAxisAlignment": "start",
@@ -8,7 +8,7 @@
             "spacing": 14
         }
     },
-    "type": [0, 0, 30, 1],
+    "type": [0, 0, 30, 100],
     "Nav-root": {
         "layout": {
             "direction": "row",
@@ -21,11 +21,11 @@
     "Nav-button": {
         "padding": { "top": "0.5", "bottom": 0.5, "left": 1, "right": 1 },
         "corner": { "topLeft": 0.75, "topRight": 0.75, "bottomLeft": 0.75, "bottomRight": 0.75 },
-        "typography": { "fontSize": 1, "fontWeight": 400, "color": [0, 0, 0] }
+        "typography": { "fontSize": 1, "fontWeight": 400, "color": [0, 0, 0, 100] }
     },
-    "Nav-button:green": { "background": { "color": [150, 50, 70] } },
-    "Nav-button:red": { "background": { "color": [0, 50, 70] } },
-    "Nav-button:reset": { "background": { "color": [0, 0, 100] } },
+    "Nav-button:green": { "background": { "color": [150, 50, 70, 100] } },
+    "Nav-button:red": { "background": { "color": [0, 50, 70, 100] } },
+    "Nav-button:reset": { "background": { "color": [0, 0, 100, 100] } },
     "Body-root": {
         "layout": {
             "direction": "column",
@@ -34,11 +34,11 @@
             "spacing": 1
         }
     },
-    "Body-title": { "typography": { "fontSize": 4, "fontWeight": 600, "color": [0, 0, 0, 1] } },
+    "Body-title": { "typography": { "fontSize": 4, "fontWeight": 600, "color": [0, 0, 0, 100] } },
     "Body-feature": {
-        "typography": { "fontSize": 1.25, "fontWeight": 400, "color": [0, 0, 0, 1] }
+        "typography": { "fontSize": 1.25, "fontWeight": 400, "color": [0, 0, 0, 100] }
     },
     "Nav-button:hover": {
-        "typography": { "fontSize": 1, "fontWeight": 400, "color": [0, 0, 30, 1] }
+        "typography": { "fontSize": 1, "fontWeight": 400, "color": [0, 0, 30, 100] }
     }
 }

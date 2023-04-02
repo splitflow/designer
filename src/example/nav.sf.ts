@@ -23,39 +23,39 @@ export const style = createStyle('Nav', {
         ':green': {
             border: {
                 tickness: 0.2,
-                color: [150, 50, 40, 1]
+                color: [150, 50, 40, 100]
             },
             typography: {
                 fontSize: 1,
                 fontWeight: 600,
-                color: [150, 50, 30, 1]
+                color: [150, 50, 30, 100]
             }
         },
         ':hover': {
             background: {
-                color: [0, 50, 65]
+                color: [0, 50, 65, 100]
             }
         },
         ':red': {
             border: {
                 tickness: 0.2,
-                color: [0, 50, 40, 1]
+                color: [0, 50, 40, 100]
             },
             typography: {
                 fontSize: 1,
                 fontWeight: 600,
-                color: [0, 50, 30, 1]
+                color: [0, 50, 30, 100]
             }
         },
         ':reset': {
             border: {
                 tickness: 0.2,
-                color: [0, 0, 100]
+                color: [0, 0, 100, 100]
             },
             typography: {
                 fontSize: 1,
                 fontWeight: 400,
-                color: [0, 0, 100]
+                color: [0, 0, 100, 100]
             }
         }
     },
