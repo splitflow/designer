@@ -49,7 +49,7 @@ function applyCSS(css: any, stylesheet: CSSStyleSheet) {
     for (let [selectorText, properties] of Object.entries(css)) {
         const rule = cssRule(stylesheet, selectorText)
         for (let [propertyName, value] of Object.entries(properties)) {
-            if (value) {
+            if (value !== null) {
                 const [propertyValue, propertyPriority] = cssProperyValue(value)
                 rule.style.setProperty(propertyName, propertyValue, propertyPriority)
             }
