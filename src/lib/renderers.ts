@@ -2,7 +2,7 @@ import { CSSStyleDef, StyleContext, Variants } from './style'
 
 export function classNameRenderer(componentName: string) {
     return ({ elementName, variants }: StyleContext) => {
-        return [`${componentName}-${elementName}`, ...variantsClassNames(variants)]
+        return [`sf-${componentName}-${elementName}`, ...variantsClassNames(variants)]
     }
 }
 
