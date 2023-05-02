@@ -5,7 +5,7 @@ export function importInternal() {
         importInternalPromise ||
         (importInternalPromise = import(
             // @ts-ignore
-            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/designer.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/designer-1.1.x.js'
         ))
     )
 }

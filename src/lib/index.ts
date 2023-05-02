@@ -1,8 +1,8 @@
 import { importInternal } from './internal'
+import { createContainerElement, createSplitflowButton } from './ui'
 
 export interface DevToolOptions {
     movable?: boolean
-    dark?: boolean
 }
 
 let destroyHandle: () => void
@@ -13,25 +13,51 @@ export function isDesignerTool() {
 
 export function createDesignerTool(element?: Element, options?: DevToolOptions) {
     if (!destroyHandle) {
-        const destroy = createDesignerToolInternal(element, options)
+        let toolElement: Element
+        let designerVisible = false
+        const designer = createDesignerToolInternal(null, options)
+
+        function toggleDesignerVisibility(event: Event) {
+            event.stopPropagation()
+            if (designerVisible) {
+                designerVisible = false
+                designer.hide()
+            } else {
+                designerVisible = true
+                designer.show()
+            }
+        }
+
+        const button = createSplitflowButton()
+        button.addEventListener('click', toggleDesignerVisibility)
+
+        if (element) {
+            toolElement = button
+            element.appendChild(toolElement)
+        } else {
+            toolElement = createContainerElement()
+            toolElement.appendChild(button)
+            document.body.appendChild(toolElement)
+        }
 
         destroyHandle = () => {
-            destroy()
+            toolElement.remove()
+            designer.destroy()
             destroyHandle = null
         }
     }
     return destroyHandle
 }
 
-function createDesignerToolInternal(element?: Element, options?: DevToolOptions) {
-    const destroy = importInternal().then(({ createDesignerTool }) =>
+export function createDesignerToolInternal(element?: Element, options?: DevToolOptions) {
+    const designer = importInternal().then(({ createDesignerTool }) =>
         createDesignerTool(element, options)
     )
-    return () => destroy.then((destroy) => destroy())
-}
-
-export function destroyDesignerTool() {
-    destroyHandle?.()
+    return {
+        destroy: () => designer.then((designer) => designer.destroy()),
+        show: () => designer.then((designer) => designer.show()),
+        hide: () => designer.then((designer) => designer.hide()),
+    }
 }
 
 export function selectComponentInternal(component: any, element: any) {
