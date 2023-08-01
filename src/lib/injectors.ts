@@ -1,48 +1,146 @@
-import { ASTToCSSVisitor, cssProperyValue, RootNode as ASTRootNode } from '@splitflow/core/ast'
-import { SplitflowStyleDef, styleToAST } from '@splitflow/core/style'
-import { ThemeDataNode, ThemeToCSSVisitor, RootNode as ThemeRootNode } from '@splitflow/core/theme'
-import { cssRule, stylesheet } from '@splitflow/core/utils/dom'
-import { importInternal } from './internal'
+import {
+    StyleToCSSVisitor,
+    cssProperyValue,
+    SplitflowStyleDef,
+    defToStyle,
+    ThemeDataNode,
+    ThemeToCSSVisitor,
+    StyleNode,
+    ThemeNode
+} from '@splitflow/lib/style'
+import { cssRule, stylesheet } from '@splitflow/core/dom'
+import { merge } from '@splitflow/core/utils'
 import { StyleContext } from './style'
+import { getDesigner } from './designer'
+import { ConfigNode, SplitflowConfigDef, defToConfig } from '@splitflow/lib/config'
+import { Readable, readable } from '@splitflow/core/stores'
 
-export function componentInjector(componentName: string) {
-    return ({ elementName, variants }: StyleContext) => {
-        registerComponentInternal(componentName, elementName)
+const browser = typeof document !== 'undefined'
 
-        if (variants) {
-            Object.entries(variants)
-                .filter(isSplitflowVariant)
-                .forEach(([variantName]) => {
-                    registerComponentInternal(componentName, elementName, variantName)
-                })
+export function configInjector(componentName: string, configDef: SplitflowConfigDef) {
+    let config: Readable<ConfigNode>
+
+    return () => {
+        if (!config) {
+            const { devtool, definitions } = getDesigner()
+            if (devtool) {
+                devtool.registerConfigFragment(defToConfig(componentName, configDef))
+                config = devtool.configuration
+            } else {
+                config = readable(definitions.config ?? defToConfig(componentName, configDef) ?? {})
+            }
+        }
+        return config
+    }
+}
+
+export function elementInjector(componentName: string) {
+    return ({ elementName, variants, designer }: StyleContext) => {
+        //const designer = getDesigner()
+        const { devtool } = designer
+
+        if (devtool && designer.include(componentName)) {
+            devtool.registerElement(componentName, elementName)
+
+            if (variants) {
+                Object.entries(variants)
+                    .filter(isSplitflowVariant)
+                    .forEach(([variantName]) => {
+                        devtool.registerElement(componentName, elementName, variantName)
+                    })
+            }
         }
     }
 }
 
-export function astFragmentInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => registerASTFragmentInternal(styleToAST(componentName, styleDef))
+export function styleInjector(componentName: string, styleDef: SplitflowStyleDef) {
+    let injected = false
+
+    return ({designer}) => {
+        if (injected) return
+
+        //const designer = getDesigner()
+        const { devtool, definitions, config } = designer
+
+        if (devtool && designer.include(componentName)) {
+            devtool.registerStyleFragment(defToStyle(componentName, styleDef))
+            injected = true
+            return
+        }
+
+        if (browser) {
+            const root = merge(
+                defToStyle(componentName, styleDef),
+                componentStyle(componentName, definitions.style)
+            )
+            applyCSS(styleToCSS(root), stylesheet('style'))
+            injected = true
+            return
+        }
+
+        if (config.ssr) {
+            const root = merge(
+                defToStyle(componentName, styleDef),
+                componentStyle(componentName, definitions.style)
+            )
+            designer.registerStyleCSS(styleToCSS(root))
+            injected = true
+            return
+        }
+
+        // mark as injected despite noop
+        injected = true
+    }
 }
 
-export function themeFragmentInjector(themeName: string, themeData: ThemeDataNode) {
-    return () => registerThemeFragmentInternal({ type: 'snapshot', [themeName]: themeData })
+export function themeInjector(themeName: string, themeData: ThemeDataNode) {
+    let injected = false
+
+    return ({designer}) => {
+        if (injected) return
+
+        //const designer = getDesigner()
+        const { devtool, definitions, config } = designer
+
+        if (devtool) {
+            devtool.registerThemeFragment({ type: 'snapshot', [themeName]: themeData })
+            injected = true
+            return
+        }
+
+        if (browser) {
+            const root = merge<ThemeNode, ThemeNode>(
+                { type: 'snapshot', [themeName]: themeData },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+            )
+            applyCSS(themeToCSS(root), stylesheet('theme'))
+            injected = true
+            return
+        }
+
+        if (config.ssr) {
+            const root = merge<ThemeNode, ThemeNode>(
+                { type: 'snapshot', [themeName]: themeData },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+            )
+            designer.registerThemeCSS(styleToCSS(root))
+            injected = true
+            return
+        }
+
+        // mark as injected despite noop
+        injected = true
+    }
 }
 
-export function cssInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => applyCSS(toCSS(componentName, styleDef), stylesheet('style'))
+function styleToCSS(root: StyleNode) {
+    const visitor = new StyleToCSSVisitor()
+    return visitor.root(root)
 }
 
-export function cssThemeInjector(themeName: string, themeData: ThemeDataNode) {
-    return () => applyCSS(themeToCSS(themeName, themeData), stylesheet('theme'))
-}
-
-function toCSS(componentName: string, styleDef: SplitflowStyleDef) {
-    const visitor = new ASTToCSSVisitor()
-    return visitor.root(styleToAST(componentName, styleDef))
-}
-
-function themeToCSS(themeName: string, themeData: ThemeDataNode) {
+function themeToCSS(root: ThemeNode) {
     const visitor = new ThemeToCSSVisitor()
-    return visitor.root({ type: 'snapshot', [themeName]: themeData })
+    return visitor.root(root)
 }
 
 function applyCSS(css: any, stylesheet: CSSStyleSheet) {
@@ -61,20 +159,10 @@ function isSplitflowVariant([_, value]) {
     return typeof value == 'boolean'
 }
 
-function registerComponentInternal(
-    componentName: string,
-    elementName: string,
-    variantName?: string
-) {
-    importInternal().then(({ registerComponent }) =>
-        registerComponent(componentName, elementName, variantName)
-    )
-}
-
-function registerASTFragmentInternal(root: ASTRootNode) {
-    importInternal().then(({ registerASTFragment }) => registerASTFragment(root))
-}
-
-function registerThemeFragmentInternal(root: ThemeRootNode) {
-    importInternal().then(({ registerThemeFragment }) => registerThemeFragment(root))
+function componentStyle(componentName: string, root: StyleNode) {
+    if (root) {
+        return Object.fromEntries(
+            Object.entries(root).filter(([key]) => key.startsWith(componentName))
+        )
+    }
 }

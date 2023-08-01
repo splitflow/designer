@@ -1,18 +1,17 @@
-import { ThemeDataNode } from '@splitflow/core/theme'
-import app from './app'
-import { cssThemeInjector, themeFragmentInjector } from './injectors'
+import { ThemeDataNode } from '@splitflow/lib/style'
+import { themeInjector } from './injectors'
 
 export type Theme = () => string
 
 export function createTheme(themeName: string, themeData?: ThemeDataNode) {
-    const eagerInjectors = []
+    const injectors = []
 
     if (themeData) {
-        app().devtool && eagerInjectors.push(themeFragmentInjector(themeName, themeData))
-        !app().devtool && eagerInjectors.push(cssThemeInjector(themeName, themeData))
+        injectors.push(themeInjector(themeName, themeData))
     }
 
-    eagerInjectors.forEach((injector) => injector())
-
-    return () => `sft-${themeName}`
+    return () => {
+        injectors.forEach((injector) => injector())
+        return `sft-${themeName}`
+    }
 }

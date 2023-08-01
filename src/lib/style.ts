@@ -1,7 +1,13 @@
-import { SplitflowStyleDef } from '@splitflow/core/style'
-import app from './app'
-import { astFragmentInjector, componentInjector, cssInjector } from './injectors'
+import { SplitflowStyleDef } from '@splitflow/lib/style'
+import { styleInjector, elementInjector } from './injectors'
 import { classNameRenderer, cssClassNameRenderer } from './renderers'
+import { SplitflowDesigner } from './designer'
+
+export interface StyleContext {
+    elementName: string
+    variants: Variants
+    designer: SplitflowDesigner
+}
 
 export interface Style {
     [elementName: string]: (variants?: Variants) => string
@@ -11,11 +17,6 @@ export interface Variants {
     [variantName: string]: boolean | string
 }
 
-export interface StyleContext {
-    elementName: string
-    variants: Variants
-}
-
 export interface CSSStyleDef {
     [key: string]: string | ((variants: Variants) => string)
 }
@@ -23,11 +24,6 @@ export interface CSSStyleDef {
 function isCSSStyleDef(value: any): value is CSSStyleDef {
     const property = value && Object.values(value)[0]
     return typeof property === 'string' || typeof property === 'function'
-}
-
-function isSplitflowStyleDef(value: any): value is SplitflowStyleDef {
-    const property = value && Object.values(value)[0]
-    return typeof property == 'object' && property !== null
 }
 
 export function createStyle(componentName: string): Style
@@ -49,41 +45,31 @@ export function createStyle<
 >(parent: U, styleDef: V | CSSStyleDef): W & Style
 
 export function createStyle(arg1: unknown, arg2?: unknown): any {
-    const eagerInjectors = []
     const injectors = []
     const renderers = []
 
     if (typeof arg1 !== 'string') {
         const parent = arg1 as any
-
         injectors.push(...parent._injectors)
         renderers.push(...parent._renderers)
     }
 
     if (typeof arg1 === 'string') {
         const componentName = arg1
-
-        if (app().devtool && app().include(componentName)) {
-            injectors.push(componentInjector(componentName))
-        }
+        injectors.push(elementInjector(componentName))
         renderers.push(classNameRenderer(componentName))
     }
 
     if (isCSSStyleDef(arg2)) {
-        const root = arg2
-
-        renderers.push(cssClassNameRenderer(root))
+        const cssStyleDeftyleDef = arg2
+        renderers.push(cssClassNameRenderer(cssStyleDeftyleDef))
     }
 
-    if (typeof arg1 === 'string' && isSplitflowStyleDef(arg2)) {
+    if (typeof arg1 === 'string' && !isCSSStyleDef(arg2)) {
         const componentName = arg1
-        const root = arg2
-
-        app().devtool && eagerInjectors.push(astFragmentInjector(componentName, root))
-        !app().devtool && eagerInjectors.push(cssInjector(componentName, root))
+        const styleDef = arg2 as SplitflowStyleDef
+        injectors.push(styleInjector(componentName, styleDef))
     }
-
-    eagerInjectors.forEach((injector) => injector())
 
     const target = { injectors, renderers }
 

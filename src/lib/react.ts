@@ -1,8 +1,8 @@
 import React from 'react'
-import app from './app'
-import { componentInjector } from './injectors'
+import { elementInjector } from './injectors'
 import { classNameRenderer } from './renderers'
-import { Style } from './style'
+import { Style, Variants } from './style'
+import { SplitflowDesigner } from './designer'
 
 interface ReactStyle {
     [elementName: string]: React.FunctionComponent
@@ -25,9 +25,7 @@ export function createStyle<T extends ReactStyle>(arg: unknown, styleDef: T): T 
     if (typeof arg === 'string') {
         const componentName = arg
 
-        if (app().devtool && app().include(componentName)) {
-            injectors.push(componentInjector(componentName))
-        }
+        injectors.push(elementInjector(componentName))
         renderers.push(classNameRenderer(componentName))
     }
 
@@ -54,4 +52,43 @@ export function createStyle<T extends ReactStyle>(arg: unknown, styleDef: T): T 
     }
 
     return Object.fromEntries(Object.entries(styleDef).map(wrap))
+}
+
+
+const DesignerContext = React.createContext<SplitflowDesigner>(undefined)
+
+interface DesignerProviderProps {
+    designer: SplitflowDesigner
+    children: React.ReactNode
+}
+
+export function DesignerProvider({designer, children}: DesignerProviderProps) {
+
+    return React.createElement(DesignerContext.Provider, {value: designer}, children)
+}
+
+export function useStyle(parent: Style) {
+    const designer = React.useContext(DesignerContext)
+
+    return new Proxy(parent, {
+        get: (target, property: string) => {
+            if (property === '_injectors') return target.injectors
+            if (property === '_renderers') return target.renderers
+
+            const injectors = target.injectors as any
+            const renderers = target.renderers as any
+
+            const elementName = property
+            return (variants?: Variants) => {
+                const context = { elementName, variants, designer }
+                injectors.forEach((injector) => injector(context))
+
+                const classNames = renderers.reduce((result, renderer) => {
+                    result.push(...renderer(context))
+                    return result
+                }, [])
+                return classNames.join(' ')
+            }
+        }
+    })
 }
