@@ -1,13 +1,7 @@
 import { SplitflowStyleDef } from '@splitflow/lib/style'
 import { styleInjector, elementInjector } from './injectors'
-import { classNameRenderer, cssClassNameRenderer } from './renderers'
-import { SplitflowDesigner } from './designer'
-
-export interface StyleContext {
-    elementName: string
-    variants: Variants
-    designer: SplitflowDesigner
-}
+import { classNameFormatter, cssClassNameFormatter } from './renderers'
+import { SplitflowDesigner, getDesigner } from './designer'
 
 export interface Style {
     [elementName: string]: (variants?: Variants) => string
@@ -44,50 +38,73 @@ export function createStyle<
     W extends { [key in keyof (U | V)]: (variants?: Variants) => string }
 >(parent: U, styleDef: V | CSSStyleDef): W & Style
 
+export function createStyle<U extends Style>(parent: U, designer: SplitflowDesigner): U & Style
+
 export function createStyle(arg1: unknown, arg2?: unknown): any {
-    const injectors = []
-    const renderers = []
+    let injectors: Injectors = {}
+    let formatters: Formatters = {}
+    let designer: SplitflowDesigner
 
     if (typeof arg1 !== 'string') {
         const parent = arg1 as any
-        injectors.push(...parent._injectors)
-        renderers.push(...parent._renderers)
+        injectors = parent._injectors
+        formatters = parent._formatters
     }
 
     if (typeof arg1 === 'string') {
         const componentName = arg1
-        injectors.push(elementInjector(componentName))
-        renderers.push(classNameRenderer(componentName))
+        injectors.element = elementInjector(componentName)
+        formatters.className = classNameFormatter(componentName)
     }
 
     if (isCSSStyleDef(arg2)) {
         const cssStyleDeftyleDef = arg2
-        renderers.push(cssClassNameRenderer(cssStyleDeftyleDef))
+        formatters.cssClassName = cssClassNameFormatter(cssStyleDeftyleDef)
     }
 
-    if (typeof arg1 === 'string' && !isCSSStyleDef(arg2)) {
+    if (arg2 instanceof SplitflowDesigner) {
+        designer = arg2
+    }
+
+    if (typeof arg1 === 'string' && !isCSSStyleDef(arg2) && !(arg2 instanceof SplitflowDesigner)) {
         const componentName = arg1
         const styleDef = arg2 as SplitflowStyleDef
-        injectors.push(styleInjector(componentName, styleDef))
+        injectors.style = styleInjector(componentName, styleDef)
     }
 
-    const target = { injectors, renderers }
+    return createStyleProxy(injectors, formatters, designer)
+}
 
-    return new Proxy(target, {
-        get: (target, property: string) => {
-            if (property === '_injectors') return target.injectors
-            if (property === '_renderers') return target.renderers
+interface Injectors {
+    element?: (elementName: string, variants: Variants, designer: SplitflowDesigner) => void
+    style?: (designer: SplitflowDesigner) => void
+}
+
+interface Formatters {
+    className?: (elementName: string, variants: Variants) => string[]
+    cssClassName?: (elementName: string, variants: Variants) => string[]
+}
+
+function createStyleProxy(
+    injectors: Injectors,
+    formatters: Formatters,
+    designer: SplitflowDesigner
+) {
+    return new Proxy(undefined, {
+        get: (_, property: string) => {
+            if (property === '_injectors') return injectors
+            if (property === '_formatters') return formatters
 
             const elementName = property
             return (variants?: Variants) => {
-                const context = { elementName, variants }
-                target.injectors.forEach((injector) => injector(context))
+                designer ??= getDesigner()
+                injectors.style?.(designer)
+                injectors.element?.(elementName, variants, designer)
 
-                const classNames = target.renderers.reduce((result, renderer) => {
-                    result.push(...renderer(context))
-                    return result
-                }, [])
-                return classNames.join(' ')
+                return [
+                    ...(formatters.className?.(elementName, variants) ?? []),
+                    ...(formatters.cssClassName?.(elementName, variants) ?? [])
+                ].join(' ')
             }
         }
     })

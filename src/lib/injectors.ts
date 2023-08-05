@@ -10,32 +10,59 @@ import {
 } from '@splitflow/lib/style'
 import { cssRule, stylesheet } from '@splitflow/core/dom'
 import { merge } from '@splitflow/core/utils'
-import { StyleContext } from './style'
-import { getDesigner } from './designer'
+import { Variants } from './style'
+import { SplitflowDesigner, getDesigner } from './designer'
 import { ConfigNode, SplitflowConfigDef, defToConfig } from '@splitflow/lib/config'
 import { Readable, readable } from '@splitflow/core/stores'
+import { ExpressionVariables, SchemaDef, StringDef } from '@splitflow/core/definition'
 
 const browser = typeof document !== 'undefined'
 
-export function configInjector(componentName: string, configDef: SplitflowConfigDef) {
-    let config: Readable<ConfigNode>
+export function optionTextInjector(componentName: string) {
+    return (
+        optionName: string,
+        value: string,
+        variables: ExpressionVariables,
+        designer: SplitflowDesigner
+    ) => {
+        const { devtool } = designer
 
-    return () => {
-        if (!config) {
-            const { devtool, definitions } = getDesigner()
-            if (devtool) {
-                devtool.registerConfigFragment(defToConfig(componentName, configDef))
-                config = devtool.configuration
-            } else {
-                config = readable(definitions.config ?? defToConfig(componentName, configDef) ?? {})
-            }
+        if (devtool) {
+            const definition: StringDef = { type: 'string', variables }
+            devtool.registerOptionText(componentName, optionName, value, definition)
         }
-        return config
+    }
+}
+
+export function optionEnabledInjector(componentName: string) {
+    return (optionName: string, value: boolean, designer: SplitflowDesigner) => {
+        const { devtool } = designer
+        devtool?.registerOptionEnabled(componentName, optionName, value)
+    }
+}
+
+export function optionSVGInjector(componentName: string) {
+    return (optionName: string, data: string, designer: SplitflowDesigner) => {
+        const { devtool } = designer
+        devtool?.registerOptionSVG(componentName, optionName, data)
+    }
+}
+
+export function optionPropertyInjector(componentName: string) {
+    return (
+        optionName: string,
+        propertyName: string,
+        value: unknown,
+        definition: SchemaDef,
+        designer: SplitflowDesigner
+    ) => {
+        const { devtool } = designer
+        devtool?.registerOptionProperty(componentName, optionName, propertyName, value, definition)
     }
 }
 
 export function elementInjector(componentName: string) {
-    return ({ elementName, variants, designer }: StyleContext) => {
+    return (elementName: string, variants: Variants, designer: SplitflowDesigner) => {
         //const designer = getDesigner()
         const { devtool } = designer
 
@@ -56,8 +83,10 @@ export function elementInjector(componentName: string) {
 export function styleInjector(componentName: string, styleDef: SplitflowStyleDef) {
     let injected = false
 
-    return ({designer}) => {
-        if (injected) return
+    return (designer: SplitflowDesigner) => {
+        if (injected) {
+            console.log('Injected already')
+        }
 
         //const designer = getDesigner()
         const { devtool, definitions, config } = designer
@@ -96,7 +125,7 @@ export function styleInjector(componentName: string, styleDef: SplitflowStyleDef
 export function themeInjector(themeName: string, themeData: ThemeDataNode) {
     let injected = false
 
-    return ({designer}) => {
+    return ({ designer }) => {
         if (injected) return
 
         //const designer = getDesigner()

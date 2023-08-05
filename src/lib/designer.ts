@@ -22,17 +22,25 @@ interface DesignerDefinitions {
     config: ConfigNode
 }
 
+export function createSplitflowDesigner(
+    config?: DesignerConfig,
+    definitions?: DesignerDefinitions,
+    devtool?: Devtool
+) {
+    definitions ??= { style: undefined, theme: undefined, config: undefined }
+    devtool ??= config?.devtool ? createDevtool(config) : undefined
+    config ??= {}
+
+    return new SplitflowDesigner(config, definitions, devtool)
+}
+
 export function initializeSplitflowDesigner(
     config?: DesignerConfig,
     definitions?: DesignerDefinitions,
     devtool?: Devtool
 ) {
     if (!NAMESPACE.designer) {
-        definitions ??= { style: undefined, theme: undefined, config: undefined }
-        devtool ??= config?.devtool ? createDevtool(config) : undefined
-        config ??= {}
-
-        NAMESPACE.designer = new SplitflowDesigner(config, definitions, devtool)
+        NAMESPACE.designer = createSplitflowDesigner(config, definitions, devtool)
     }
     return NAMESPACE.designer
 }

@@ -1,14 +1,24 @@
 import { derived, type Readable } from 'svelte/store'
 import {
-    compile,
     type SchemaDef,
-    type StringDef,
     type ExpressionVariables
 } from '@splitflow/core/definition'
-import { ConfigurationNode, SplitflowConfigDef } from '@splitflow/lib/config'
-import { getDesigner } from './designer'
-import { configInjector } from './injectors'
+import { ConfigNode, SplitflowConfigDef } from '@splitflow/lib/config'
+import { getDesigner, SplitflowDesigner } from './designer'
 import { readable } from '@splitflow/core/stores'
+import { configAccessor } from './accessor'
+import {
+    optionEnabledInjector,
+    optionPropertyInjector,
+    optionSVGInjector,
+    optionTextInjector
+} from './injectors'
+import {
+    optionEnabledFormatter,
+    optionPropertyFormatter,
+    optionSVGFormatter,
+    optionTextFormatter
+} from './renderers'
 
 export interface Config {
     [optionName: string]: Option & OptionProperties
@@ -27,46 +37,126 @@ export interface OptionProperties {
 export function createConfig(
     componentName: string,
     configDef?: SplitflowConfigDef
-): Readable<Config> {
-    const injector = configInjector(componentName, configDef)
+): Readable<Config>
+export function createConfig(parent: Readable<Config>, designer: SplitflowDesigner): Readable<Config>
+export function createConfig(arg1: unknown, arg2: unknown) {
+    let accessors: Accessors = {}
+    let injectors: Injectors = {}
+    let formatters: Formatters = {}
+    let designer: SplitflowDesigner
 
-    return derived(deferred(injector), ($config) => {
-        return new Proxy(
-            {},
-            {
-                get: (_, optionName: string) => {
-                    const configuration = $config[`${componentName}-${optionName}`]
-                    return createOption(componentName, optionName, configuration)
+    if (typeof arg1 !== 'string') {
+        const parent = arg1 as any
+        accessors = parent._accessors
+        injectors = parent._injectors
+        formatters = parent._formatters
+    }
+
+    if (typeof arg1 === 'string') {
+        const componentName = arg1
+        const configDef = arg2 as SplitflowConfigDef
+        accessors.config = configAccessor(componentName, configDef)
+        injectors.optionEnabled = optionEnabledInjector(componentName)
+        injectors.optionText = optionTextInjector(componentName)
+        injectors.optionSVG = optionSVGInjector(componentName)
+        injectors.optionProperty = optionPropertyInjector(componentName)
+        formatters.optionEnabled = optionEnabledFormatter(componentName)
+        formatters.optionText = optionTextFormatter(componentName)
+        formatters.optionSVG = optionSVGFormatter(componentName)
+        formatters.optionProperty = optionPropertyFormatter(componentName)
+    }
+
+    if (arg2 instanceof SplitflowDesigner) {
+        designer = arg2
+    }
+
+    const { subscribe } = derived(
+        deferred(() => accessors.config(designer ?? getDesigner())),
+        ($config) => {
+            return new Proxy(
+                {},
+                {
+                    get: (_, optionName: string) => {
+                        return createOptionProxy(
+                            optionName,
+                            injectors,
+                            formatters,
+                            $config,
+                            designer ?? getDesigner()
+                        )
+                    }
                 }
-            }
-        )
-    })
+            )
+        }
+    )
+
+    return {
+        subscribe,
+        _accessors: accessors,
+        _injectors: injectors,
+        _formatters: formatters
+    }
 }
 
-function createOption(
-    componentName: string,
-    optionName: string,
-    configuration: ConfigurationNode
-): Option {
-    const { devtool } = getDesigner()
+interface Accessors {
+    config?: (designer: SplitflowDesigner) => Readable<ConfigNode>
+}
 
+interface Injectors {
+    optionText?: (
+        optionName: string,
+        value: string,
+        variables: ExpressionVariables,
+        designer: SplitflowDesigner
+    ) => void
+    optionEnabled?: (optionName: string, value: boolean, designer: SplitflowDesigner) => void
+    optionSVG?: (optionName: string, data: string, designer: SplitflowDesigner) => void
+    optionProperty?: (
+        optionName: string,
+        propertyName: string,
+        value: unknown,
+        definition: SchemaDef,
+        designer: SplitflowDesigner
+    ) => void
+}
+
+interface Formatters {
+    optionEnabled?: (optionName: string, config: ConfigNode) => boolean
+    optionText?: (
+        optionName: string,
+        value: string,
+        variables: ExpressionVariables,
+        config: ConfigNode
+    ) => string
+    optionSVG?: (optionName: string, data: string, config: ConfigNode) => string
+    optionProperty?: (
+        optionName: string,
+        propertyName: string,
+        value: unknown,
+        config: ConfigNode
+    ) => unknown
+}
+
+function createOptionProxy(
+    optionName: string,
+    injectors: Injectors,
+    formatters: Formatters,
+    config: ConfigNode,
+    designer: SplitflowDesigner
+): Option {
     return new Proxy(
         {
             enabled: (value = true) => {
-                devtool?.registerOptionEnabled(componentName, optionName, value)
-                return configuration?.enabled ?? true
+                injectors.optionEnabled?.(optionName, value, designer)
+                return formatters.optionEnabled(optionName, config)
             },
             text: (value, variables) => {
-                const definition: StringDef = { type: 'string', variables }
-
-                devtool?.registerOptionText(componentName, optionName, value, definition)
-                return compile(definition).format(configuration?.content?.text ?? value)
+                injectors.optionText?.(optionName, value, variables, designer)
+                return formatters.optionText(optionName, value, variables, config)
             },
             svg: (data) => {
-                devtool?.registerOptionSVG(componentName, optionName, data)
-                return (
-                    'data:image/svg+xml,' + encodeURIComponent(configuration?.content?.svg ?? data)
-                )
+                injectors.optionSVG?.(optionName, data, designer)
+                return formatters.optionSVG(optionName, data, config)
             }
         },
         {
@@ -75,14 +165,14 @@ function createOption(
                 if (property) return property
 
                 return <T>(value?: T, definition?: SchemaDef) => {
-                    devtool?.registerOptionProperty(
-                        componentName,
+                    injectors.optionProperty?.(
                         optionName,
                         propertyName,
                         value,
-                        definition
+                        definition,
+                        designer
                     )
-                    return configuration?.property?.[propertyName] ?? value
+                    return formatters.optionProperty(optionName, propertyName, value, config)
                 }
             }
         }
