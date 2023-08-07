@@ -1,7 +1,9 @@
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
 import { Devtool, createDevtool } from './devtool'
 import { ConfigNode } from '@splitflow/lib/config'
-import { loadConfigDefinition, loadStyleDefinition, loadThemeDefinition } from './loader'
+import { loadConfigDefinition, loadStyleDefinition, loadThemeDefinition } from './loaders'
+
+const browser = typeof document !== 'undefined'
 
 interface Namespace {
     designer?: SplitflowDesigner
@@ -28,7 +30,7 @@ export function createSplitflowDesigner(
     devtool?: Devtool
 ) {
     definitions ??= { style: undefined, theme: undefined, config: undefined }
-    devtool ??= config?.devtool ? createDevtool(config) : undefined
+    devtool ??= config?.devtool && browser ? createDevtool(config) : undefined
     config ??= {}
 
     return new SplitflowDesigner(config, definitions, devtool)
@@ -75,33 +77,51 @@ export class SplitflowDesigner {
     }
 
     async loadDefinitions() {
-        const [style, theme, config] = await Promise.all([
-            loadStyleDefinition(this.config?.projectId),
-            loadThemeDefinition(this.config?.projectId),
-            loadConfigDefinition(this.config?.projectId)
-        ])
-        this.definitions = { style, theme, config }
+        this.definitions = await loadSplitflowDesignerDefinitions(this.config)
     }
 
     printHeaders() {
-        return `
-            <style type="text/css" data-splitflow-id="style">${formatCss(this.#styleCss)}</style>
-            <style type="text/css" data-splitflow-id="theme">${formatCss(this.#themeCss)}</style>
-        `
+        if (!browser) {
+            return `
+                <style type="text/css" data-splitflow-id="style">
+                    ${formatCss(this.#styleCss)}
+                </style>
+                <style type="text/css" data-splitflow-id="theme">
+                    ${formatCss(this.#themeCss)}
+                </style>
+            `
+        }
     }
 
     printStyleCss() {
-        return formatCss(this.#styleCss)
+        if (!browser) {
+            return formatCss(this.#styleCss)
+        }
     }
 
     printThemeCss() {
-        return formatCss(this.#themeCss)
+        if (!browser) {
+            return formatCss(this.#themeCss)
+        }
     }
 
     destroy() {
         this.devtool.destroy()
-        NAMESPACE.designer = undefined
+        if (NAMESPACE.designer === this) {
+            NAMESPACE.designer = undefined
+        }
     }
+}
+
+export async function loadSplitflowDesignerDefinitions(
+    config: DesignerConfig
+): Promise<DesignerDefinitions> {
+    const [style, theme, _config] = await Promise.all([
+        loadStyleDefinition(config?.projectId),
+        loadThemeDefinition(config?.projectId),
+        loadConfigDefinition(config?.projectId)
+    ])
+    return { style, theme, config: _config }
 }
 
 function formatCss(css: any) {

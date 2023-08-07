@@ -1,6 +1,6 @@
 import { SplitflowStyleDef } from '@splitflow/lib/style'
 import { styleInjector, elementInjector } from './injectors'
-import { classNameFormatter, cssClassNameFormatter } from './renderers'
+import { classNameFormatter, cssClassNameFormatter } from './formatters'
 import { SplitflowDesigner, getDesigner } from './designer'
 
 export interface Style {
@@ -39,6 +39,7 @@ export function createStyle<
 >(parent: U, styleDef: V | CSSStyleDef): W & Style
 
 export function createStyle<U extends Style>(parent: U, designer: SplitflowDesigner): U & Style
+export function createStyle(componentName: string, designer: SplitflowDesigner): Style
 
 export function createStyle(arg1: unknown, arg2?: unknown): any {
     let injectors: Injectors = {}
@@ -66,9 +67,12 @@ export function createStyle(arg1: unknown, arg2?: unknown): any {
         designer = arg2
     }
 
-    if (typeof arg1 === 'string' && !isCSSStyleDef(arg2) && !(arg2 instanceof SplitflowDesigner)) {
+    if (typeof arg1 === 'string') {
         const componentName = arg1
-        const styleDef = arg2 as SplitflowStyleDef
+        const styleDef =
+            !isCSSStyleDef(arg2) && !(arg2 instanceof SplitflowDesigner)
+                ? (arg2 as SplitflowStyleDef)
+                : undefined
         injectors.style = styleInjector(componentName, styleDef)
     }
 
@@ -90,22 +94,25 @@ function createStyleProxy(
     formatters: Formatters,
     designer: SplitflowDesigner
 ) {
-    return new Proxy(undefined, {
-        get: (_, property: string) => {
-            if (property === '_injectors') return injectors
-            if (property === '_formatters') return formatters
+    return new Proxy(
+        {},
+        {
+            get: (_, property: string) => {
+                if (property === '_injectors') return injectors
+                if (property === '_formatters') return formatters
 
-            const elementName = property
-            return (variants?: Variants) => {
-                designer ??= getDesigner()
-                injectors.style?.(designer)
-                injectors.element?.(elementName, variants, designer)
+                const elementName = property
+                return (variants?: Variants) => {
+                    designer ??= getDesigner()
+                    injectors.style?.(designer)
+                    injectors.element?.(elementName, variants, designer)
 
-                return [
-                    ...(formatters.className?.(elementName, variants) ?? []),
-                    ...(formatters.cssClassName?.(elementName, variants) ?? [])
-                ].join(' ')
+                    return [
+                        ...(formatters.className?.(elementName, variants) ?? []),
+                        ...(formatters.cssClassName?.(elementName, variants) ?? [])
+                    ].join(' ')
+                }
             }
         }
-    })
+    )
 }

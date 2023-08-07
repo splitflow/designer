@@ -1,8 +1,8 @@
 import React from 'react'
 import { elementInjector } from '../injectors'
-import { classNameFormatter } from '../renderers'
+import { classNameFormatter } from '../formatters'
 import { Style, Variants, createStyle } from '../style'
-import { DesignerContext } from './provider'
+import { SplitflowDesignerContext } from './provider'
 import { SplitflowDesigner, getDesigner } from '../designer'
 
 interface ReactStyle {
@@ -29,7 +29,7 @@ export function styled<T extends ReactStyle>(arg: unknown, styleDef: T): T {
 
     function wrap([elementName, functionComponent]: [string, React.FunctionComponent]) {
         const wrappedFunctionComponent = React.forwardRef((props, ref) => {
-            const designer = React.useContext(DesignerContext) ?? getDesigner()
+            const designer = React.useContext(SplitflowDesignerContext) ?? getDesigner()
 
             injectors.style?.(designer)
             injectors.element?.(elementName, undefined, designer)
@@ -60,6 +60,6 @@ interface Formatters {
 }
 
 export function useStyle(style: Style) {
-    const designer = React.useContext(DesignerContext)
-    return createStyle(style, designer)
+    const designer = React.useContext(SplitflowDesignerContext)
+    return designer ? createStyle(style, designer) : style
 }

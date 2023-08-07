@@ -11,9 +11,7 @@ import {
 import { cssRule, stylesheet } from '@splitflow/core/dom'
 import { merge } from '@splitflow/core/utils'
 import { Variants } from './style'
-import { SplitflowDesigner, getDesigner } from './designer'
-import { ConfigNode, SplitflowConfigDef, defToConfig } from '@splitflow/lib/config'
-import { Readable, readable } from '@splitflow/core/stores'
+import { SplitflowDesigner } from './designer'
 import { ExpressionVariables, SchemaDef, StringDef } from '@splitflow/core/definition'
 
 const browser = typeof document !== 'undefined'
@@ -63,7 +61,6 @@ export function optionPropertyInjector(componentName: string) {
 
 export function elementInjector(componentName: string) {
     return (elementName: string, variants: Variants, designer: SplitflowDesigner) => {
-        //const designer = getDesigner()
         const { devtool } = designer
 
         if (devtool && designer.include(componentName)) {
@@ -81,19 +78,11 @@ export function elementInjector(componentName: string) {
 }
 
 export function styleInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    let injected = false
-
     return (designer: SplitflowDesigner) => {
-        if (injected) {
-            console.log('Injected already')
-        }
-
-        //const designer = getDesigner()
         const { devtool, definitions, config } = designer
 
         if (devtool && designer.include(componentName)) {
             devtool.registerStyleFragment(defToStyle(componentName, styleDef))
-            injected = true
             return
         }
 
@@ -103,7 +92,6 @@ export function styleInjector(componentName: string, styleDef: SplitflowStyleDef
                 componentStyle(componentName, definitions.style)
             )
             applyCSS(styleToCSS(root), stylesheet('style'))
-            injected = true
             return
         }
 
@@ -113,27 +101,17 @@ export function styleInjector(componentName: string, styleDef: SplitflowStyleDef
                 componentStyle(componentName, definitions.style)
             )
             designer.registerStyleCSS(styleToCSS(root))
-            injected = true
             return
         }
-
-        // mark as injected despite noop
-        injected = true
     }
 }
 
 export function themeInjector(themeName: string, themeData: ThemeDataNode) {
-    let injected = false
-
-    return ({ designer }) => {
-        if (injected) return
-
-        //const designer = getDesigner()
+    return (designer: SplitflowDesigner) => {
         const { devtool, definitions, config } = designer
 
         if (devtool) {
             devtool.registerThemeFragment({ type: 'snapshot', [themeName]: themeData })
-            injected = true
             return
         }
 
@@ -143,7 +121,6 @@ export function themeInjector(themeName: string, themeData: ThemeDataNode) {
                 { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
             )
             applyCSS(themeToCSS(root), stylesheet('theme'))
-            injected = true
             return
         }
 
@@ -153,12 +130,8 @@ export function themeInjector(themeName: string, themeData: ThemeDataNode) {
                 { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
             )
             designer.registerThemeCSS(styleToCSS(root))
-            injected = true
             return
         }
-
-        // mark as injected despite noop
-        injected = true
     }
 }
 

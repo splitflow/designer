@@ -13,18 +13,25 @@
     },
     "type": "module",
     "files": [
-        "dist/**.js",
-        "dist/**.cjs",
-        "dist/**.d.ts"
+        "dist/**/*.js",
+        "dist/**/*.cjs",
+        "dist/**/*.d.ts"
     ],
     "exports": {
         ".": {
             "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "require": "./dist/index.cjs",
+            "types":  "./dist/index.d.ts"
         },
         "./react": {
             "import": "./dist/react.js",
-            "require": "./dist/react.cjs"
+            "require": "./dist/react.cjs",
+            "types": "./dist/react/index.d.ts"
+        },
+        "./svelte": {
+            "import": "./dist/svelte.js",
+            "require": "./dist/svelte.cjs",
+            "types": "./dist/svelte/index.d.ts"
         }
     },
     "typesVersions": {
@@ -34,6 +41,9 @@
             ],
             "react": [
                 "dist/react/index.d.ts"
+            ],
+            "svelte": [
+                "dist/svelte/index.d.ts"
             ]
         }
     },
@@ -46,16 +56,21 @@
     "devDependencies": {
         "@types/react": "^18.0.27",
         "react": "^18.2.0",
+        "svelte": "^4.1.2",
         "typescript": "^4.9.3",
         "vite": "^4.0.0",
         "vite-plugin-dts": "^1.7.1",
         "vitest": "^0.28.4"
     },
     "peerDependencies": {
-        "react": ">=16.3.0"
+        "react": ">=16.3.0",
+        "svelte": ">=4.1.2"
     },
     "peerDependenciesMeta": {
         "react": {
+            "optional": true
+        },
+        "svelte": {
             "optional": true
         }
     },

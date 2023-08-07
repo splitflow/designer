@@ -8,7 +8,8 @@ export default defineConfig({
         lib: {
             entry: {
                 index: './src/lib/index.ts',
-                react: './src/lib/react/index.ts'
+                react: './src/lib/react/index.ts',
+                svelte: './src/lib/svelte/index.ts'
             }
         },
         rollupOptions: {

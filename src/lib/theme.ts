@@ -1,17 +1,51 @@
 import { ThemeDataNode } from '@splitflow/lib/style'
 import { themeInjector } from './injectors'
+import { SplitflowDesigner, getDesigner } from './designer'
+import { themeClassNameFormatter } from './formatters'
 
 export type Theme = () => string
 
-export function createTheme(themeName: string, themeData?: ThemeDataNode) {
-    const injectors = []
+interface Injectors {
+    theme?: (desoigner: SplitflowDesigner) => void
+}
 
-    if (themeData) {
-        injectors.push(themeInjector(themeName, themeData))
+interface Formatters {
+    className?: () => string[]
+}
+
+export function createTheme(themeName: string, themeData?: ThemeDataNode): Theme
+export function createTheme(parent: Theme, designer: SplitflowDesigner): Theme
+export function createTheme(arg1: unknown, arg2: unknown): any {
+    let injectors: Injectors = {}
+    let formatters: Formatters = {}
+    let designer: SplitflowDesigner
+
+    if (typeof arg1 !== 'string') {
+        const parent = arg1 as any
+        injectors = parent._injectors
+        formatters = parent._formatters
     }
 
-    return () => {
-        injectors.forEach((injector) => injector())
-        return `sft-${themeName}`
+    if (typeof arg1 === 'string') {
+        const themeName = arg1
+        formatters.className = themeClassNameFormatter(themeName)
     }
+
+    if (typeof arg1 === 'string' && arg2) {
+        const themeName = arg1
+        const themeData = arg2 as ThemeDataNode
+        injectors.theme = themeInjector(themeName, themeData)
+    }
+
+    if (arg2 instanceof SplitflowDesigner) {
+        designer = arg2
+    }
+
+    const fn = () => {
+        injectors.theme?.(designer ?? getDesigner())
+        return formatters.className().join(' ')
+    }
+    fn._injectors = injectors
+    fn._formatters = formatters
+    return fn
 }

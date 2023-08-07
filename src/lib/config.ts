@@ -18,7 +18,7 @@ import {
     optionPropertyFormatter,
     optionSVGFormatter,
     optionTextFormatter
-} from './renderers'
+} from './formatters'
 
 export interface Config {
     [optionName: string]: Option & OptionProperties
@@ -121,7 +121,7 @@ interface Injectors {
 }
 
 interface Formatters {
-    optionEnabled?: (optionName: string, config: ConfigNode) => boolean
+    optionEnabled?: (optionName: string, value: boolean, config: ConfigNode) => boolean
     optionText?: (
         optionName: string,
         value: string,
@@ -148,7 +148,7 @@ function createOptionProxy(
         {
             enabled: (value = true) => {
                 injectors.optionEnabled?.(optionName, value, designer)
-                return formatters.optionEnabled(optionName, config)
+                return formatters.optionEnabled(optionName, value, config)
             },
             text: (value, variables) => {
                 injectors.optionText?.(optionName, value, variables, designer)

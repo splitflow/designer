@@ -1,3 +1,4 @@
+export * from './config'
 export * from './designer'
 export * from './devtool'
 export * from './style'

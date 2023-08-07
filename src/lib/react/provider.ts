@@ -1,14 +1,13 @@
-import React from "react"
-import { SplitflowDesigner } from "../designer"
+import React from 'react'
+import { SplitflowDesigner } from '../designer'
 
-export const DesignerContext = React.createContext<SplitflowDesigner>(undefined)
+export const SplitflowDesignerContext = React.createContext<SplitflowDesigner>(undefined)
 
-interface DesignerProviderProps {
+interface SplitflowDesignerProviderProps {
     designer: SplitflowDesigner
     children: React.ReactNode
 }
 
-export function DesignerProvider({designer, children}: DesignerProviderProps) {
-
-    return React.createElement(DesignerContext.Provider, {value: designer}, children)
+export function SplitflowDesignerProvider({ designer, children }: SplitflowDesignerProviderProps) {
+    return React.createElement(SplitflowDesignerContext.Provider, { value: designer }, children)
 }

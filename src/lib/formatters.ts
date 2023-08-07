@@ -3,8 +3,8 @@ import { CSSStyleDef, Variants } from './style'
 import { ExpressionVariables, StringDef, compile } from '@splitflow/core/definition'
 
 export function optionEnabledFormatter(componentName: string) {
-    return (optionName: string, config: ConfigNode) => {
-        return config[`${componentName}-${optionName}`]?.enabled ?? true
+    return (optionName: string, value: boolean, config: ConfigNode) => {
+        return config?.[`${componentName}-${optionName}`]?.enabled ?? value
     }
 }
 
@@ -17,7 +17,7 @@ export function optionTextFormatter(componentName: string) {
     ) => {
         const definition: StringDef = { type: 'string', variables }
         return compile(definition).format(
-            config[`${componentName}-${optionName}`]?.content?.text ?? value
+            config?.[`${componentName}-${optionName}`]?.content?.text ?? value
         )
     }
 }
@@ -26,14 +26,14 @@ export function optionSVGFormatter(componentName: string) {
     return (optionName: string, data: string, config: ConfigNode) => {
         return (
             'data:image/svg+xml,' +
-            encodeURIComponent(config[`${componentName}-${optionName}`]?.content?.svg ?? data)
+            encodeURIComponent(config?.[`${componentName}-${optionName}`]?.content?.svg ?? data)
         )
     }
 }
 
 export function optionPropertyFormatter(componentName: string) {
     return (optionName: string, propertyName: string, value: string, config: ConfigNode) => {
-        return config[`${componentName}-${optionName}`]?.property?.[propertyName] ?? value
+        return config?.[`${componentName}-${optionName}`]?.property?.[propertyName] ?? value
     }
 }
 
@@ -46,6 +46,12 @@ export function classNameFormatter(componentName: string) {
 export function cssClassNameFormatter(styleDef: CSSStyleDef) {
     return (elementName: string, variants: Variants) => {
         return cssClassNames(styleDef[elementName], variants)
+    }
+}
+
+export function themeClassNameFormatter(themeName: string) {
+    return () => {
+        return [`sft-${themeName}`]
     }
 }
 

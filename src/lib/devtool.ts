@@ -11,8 +11,7 @@ export function importDevtool() {
         (importPromise = import(
             /* webpackIgnore: true */
             // @ts-ignore
-            //'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-1.0.x.js'
-            'http://localhost:3000/index.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-1.0.x.js'
         ))
     )
 }
@@ -62,8 +61,15 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
         return config?.include?.indexOf(componentName) != -1 ?? true
     }
 
+    let registeredConfigFragment: ConfigNode
+
     return {
-        configuration: deferred(promise.then((dt) => dt.configuration)),
+        get configuration() {
+            return deferred(
+                registeredConfigFragment,
+                promise.then((dt) => dt.configuration)
+            )
+        },
         destroy() {
             promise.then((dt) => dt.destroy())
         },
@@ -88,6 +94,7 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
             promise.then((dt) => dt.playStyleFragment(root))
         },
         registerConfigFragment(root: ConfigNode) {
+            registeredConfigFragment = root
             promise.then((dt) => dt.registerConfigFragment(root))
         },
         registerOptionEnabled(componentName: string, optionName: string, enabled: boolean) {
@@ -126,8 +133,8 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
     }
 }
 
-function deferred<T>(promise: Promise<Readable<T>>) {
-    const { subscribe } = readable({}, (set) => {
+function deferred<T>(initialValue: T, promise: Promise<Readable<T>>) {
+    const { subscribe } = readable(initialValue, (set) => {
         let unsubscribe: () => void
 
         promise.then((deferred) => {
