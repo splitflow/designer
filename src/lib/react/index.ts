@@ -1,5 +1,4 @@
 export * from './config'
-export * from './designer'
-export * from './devtool'
+export * from './provider'
 export * from './style'
 export * from './theme'

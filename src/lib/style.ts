@@ -1,7 +1,7 @@
-import { SplitflowStyleDef } from '@splitflow/core/style'
-import app from './app'
-import { astFragmentInjector, componentInjector, cssInjector } from './injectors'
-import { classNameRenderer, cssClassNameRenderer } from './renderers'
+import { SplitflowStyleDef } from '@splitflow/lib/style'
+import { styleInjector, elementInjector } from './injectors'
+import { classNameFormatter, cssClassNameFormatter } from './formatters'
+import { SplitflowDesigner, getDesigner } from './designer'
 
 export interface Style {
     [elementName: string]: (variants?: Variants) => string
@@ -11,11 +11,6 @@ export interface Variants {
     [variantName: string]: boolean | string
 }
 
-export interface StyleContext {
-    elementName: string
-    variants: Variants
-}
-
 export interface CSSStyleDef {
     [key: string]: string | ((variants: Variants) => string)
 }
@@ -23,11 +18,6 @@ export interface CSSStyleDef {
 function isCSSStyleDef(value: any): value is CSSStyleDef {
     const property = value && Object.values(value)[0]
     return typeof property === 'string' || typeof property === 'function'
-}
-
-function isSplitflowStyleDef(value: any): value is SplitflowStyleDef {
-    const property = value && Object.values(value)[0]
-    return typeof property == 'object' && property !== null
 }
 
 export function createStyle(componentName: string): Style
@@ -48,61 +38,81 @@ export function createStyle<
     W extends { [key in keyof (U | V)]: (variants?: Variants) => string }
 >(parent: U, styleDef: V | CSSStyleDef): W & Style
 
+export function createStyle<U extends Style>(parent: U, designer: SplitflowDesigner): U & Style
+export function createStyle(componentName: string, designer: SplitflowDesigner): Style
+
 export function createStyle(arg1: unknown, arg2?: unknown): any {
-    const eagerInjectors = []
-    const injectors = []
-    const renderers = []
+    let injectors: Injectors = {}
+    let formatters: Formatters = {}
+    let designer: SplitflowDesigner
 
     if (typeof arg1 !== 'string') {
         const parent = arg1 as any
-
-        injectors.push(...parent._injectors)
-        renderers.push(...parent._renderers)
+        injectors = parent._injectors
+        formatters = parent._formatters
     }
 
     if (typeof arg1 === 'string') {
         const componentName = arg1
-
-        if (app().devtool && app().include(componentName)) {
-            injectors.push(componentInjector(componentName))
-        }
-        renderers.push(classNameRenderer(componentName))
+        injectors.element = elementInjector(componentName)
+        formatters.className = classNameFormatter(componentName)
     }
 
     if (isCSSStyleDef(arg2)) {
-        const root = arg2
-
-        renderers.push(cssClassNameRenderer(root))
+        const cssStyleDeftyleDef = arg2
+        formatters.cssClassName = cssClassNameFormatter(cssStyleDeftyleDef)
     }
 
-    if (typeof arg1 === 'string' && isSplitflowStyleDef(arg2)) {
+    if (arg2 instanceof SplitflowDesigner) {
+        designer = arg2
+    }
+
+    if (typeof arg1 === 'string') {
         const componentName = arg1
-        const root = arg2
-
-        app().devtool && eagerInjectors.push(astFragmentInjector(componentName, root))
-        !app().devtool && eagerInjectors.push(cssInjector(componentName, root))
+        const styleDef =
+            !isCSSStyleDef(arg2) && !(arg2 instanceof SplitflowDesigner)
+                ? (arg2 as SplitflowStyleDef)
+                : undefined
+        injectors.style = styleInjector(componentName, styleDef)
     }
 
-    eagerInjectors.forEach((injector) => injector())
+    return createStyleProxy(injectors, formatters, designer)
+}
 
-    const target = { injectors, renderers }
+interface Injectors {
+    element?: (elementName: string, variants: Variants, designer: SplitflowDesigner) => void
+    style?: (designer: SplitflowDesigner) => void
+}
 
-    return new Proxy(target, {
-        get: (target, property: string) => {
-            if (property === '_injectors') return target.injectors
-            if (property === '_renderers') return target.renderers
+interface Formatters {
+    className?: (elementName: string, variants: Variants) => string[]
+    cssClassName?: (elementName: string, variants: Variants) => string[]
+}
 
-            const elementName = property
-            return (variants?: Variants) => {
-                const context = { elementName, variants }
-                target.injectors.forEach((injector) => injector(context))
+function createStyleProxy(
+    injectors: Injectors,
+    formatters: Formatters,
+    designer: SplitflowDesigner
+) {
+    return new Proxy(
+        {},
+        {
+            get: (_, property: string) => {
+                if (property === '_injectors') return injectors
+                if (property === '_formatters') return formatters
 
-                const classNames = target.renderers.reduce((result, renderer) => {
-                    result.push(...renderer(context))
-                    return result
-                }, [])
-                return classNames.join(' ')
+                const elementName = property
+                return (variants?: Variants) => {
+                    designer ??= getDesigner()
+                    injectors.style?.(designer)
+                    injectors.element?.(elementName, variants, designer)
+
+                    return [
+                        ...(formatters.className?.(elementName, variants) ?? []),
+                        ...(formatters.cssClassName?.(elementName, variants) ?? [])
+                    ].join(' ')
+                }
             }
         }
-    })
+    )
 }

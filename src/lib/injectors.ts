@@ -1,48 +1,148 @@
-import { ASTToCSSVisitor, cssProperyValue, RootNode as ASTRootNode } from '@splitflow/core/ast'
-import { SplitflowStyleDef, styleToAST } from '@splitflow/core/style'
-import { ThemeDataNode, ThemeToCSSVisitor, RootNode as ThemeRootNode } from '@splitflow/core/theme'
-import { cssRule, stylesheet } from '@splitflow/core/utils/dom'
-import { importInternal } from './internal'
-import { StyleContext } from './style'
+import {
+    StyleToCSSVisitor,
+    cssProperyValue,
+    SplitflowStyleDef,
+    defToStyle,
+    ThemeDataNode,
+    ThemeToCSSVisitor,
+    StyleNode,
+    ThemeNode
+} from '@splitflow/lib/style'
+import { cssRule, stylesheet } from '@splitflow/core/dom'
+import { merge } from '@splitflow/core/utils'
+import { Variants } from './style'
+import { SplitflowDesigner } from './designer'
+import { ExpressionVariables, SchemaDef, StringDef } from '@splitflow/core/definition'
 
-export function componentInjector(componentName: string) {
-    return ({ elementName, variants }: StyleContext) => {
-        registerComponentInternal(componentName, elementName)
+const browser = typeof document !== 'undefined'
 
-        if (variants) {
-            Object.entries(variants)
-                .filter(isSplitflowVariant)
-                .forEach(([variantName]) => {
-                    registerComponentInternal(componentName, elementName, variantName)
-                })
+export function optionTextInjector(componentName: string) {
+    return (
+        optionName: string,
+        value: string,
+        variables: ExpressionVariables,
+        designer: SplitflowDesigner
+    ) => {
+        const { devtool } = designer
+
+        if (devtool) {
+            const definition: StringDef = { type: 'string', variables }
+            devtool.registerOptionText(componentName, optionName, value, definition)
         }
     }
 }
 
-export function astFragmentInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => registerASTFragmentInternal(styleToAST(componentName, styleDef))
+export function optionEnabledInjector(componentName: string) {
+    return (optionName: string, value: boolean, designer: SplitflowDesigner) => {
+        const { devtool } = designer
+        devtool?.registerOptionEnabled(componentName, optionName, value)
+    }
 }
 
-export function themeFragmentInjector(themeName: string, themeData: ThemeDataNode) {
-    return () => registerThemeFragmentInternal({ type: 'snapshot', [themeName]: themeData })
+export function optionSVGInjector(componentName: string) {
+    return (optionName: string, data: string, designer: SplitflowDesigner) => {
+        const { devtool } = designer
+        devtool?.registerOptionSVG(componentName, optionName, data)
+    }
 }
 
-export function cssInjector(componentName: string, styleDef: SplitflowStyleDef) {
-    return () => applyCSS(toCSS(componentName, styleDef), stylesheet('style'))
+export function optionPropertyInjector(componentName: string) {
+    return (
+        optionName: string,
+        propertyName: string,
+        value: unknown,
+        definition: SchemaDef,
+        designer: SplitflowDesigner
+    ) => {
+        const { devtool } = designer
+        devtool?.registerOptionProperty(componentName, optionName, propertyName, value, definition)
+    }
 }
 
-export function cssThemeInjector(themeName: string, themeData: ThemeDataNode) {
-    return () => applyCSS(themeToCSS(themeName, themeData), stylesheet('theme'))
+export function elementInjector(componentName: string) {
+    return (elementName: string, variants: Variants, designer: SplitflowDesigner) => {
+        const { devtool } = designer
+
+        if (devtool && designer.include(componentName)) {
+            devtool.registerElement(componentName, elementName)
+
+            if (variants) {
+                Object.entries(variants)
+                    .filter(isSplitflowVariant)
+                    .forEach(([variantName]) => {
+                        devtool.registerElement(componentName, elementName, variantName)
+                    })
+            }
+        }
+    }
 }
 
-function toCSS(componentName: string, styleDef: SplitflowStyleDef) {
-    const visitor = new ASTToCSSVisitor()
-    return visitor.root(styleToAST(componentName, styleDef))
+export function styleInjector(componentName: string, styleDef: SplitflowStyleDef) {
+    return (designer: SplitflowDesigner) => {
+        const { devtool, definitions, config } = designer
+
+        if (devtool && designer.include(componentName)) {
+            devtool.registerStyleFragment(defToStyle(componentName, styleDef))
+            return
+        }
+
+        if (browser) {
+            const root = merge(
+                defToStyle(componentName, styleDef),
+                componentStyle(componentName, definitions.style)
+            )
+            applyCSS(styleToCSS(root), stylesheet('style'))
+            return
+        }
+
+        if (config.ssr) {
+            const root = merge(
+                defToStyle(componentName, styleDef),
+                componentStyle(componentName, definitions.style)
+            )
+            designer.registerStyleCSS(styleToCSS(root))
+            return
+        }
+    }
 }
 
-function themeToCSS(themeName: string, themeData: ThemeDataNode) {
+export function themeInjector(themeName: string, themeData: ThemeDataNode) {
+    return (designer: SplitflowDesigner) => {
+        const { devtool, definitions, config } = designer
+
+        if (devtool) {
+            devtool.registerThemeFragment({ type: 'snapshot', [themeName]: themeData })
+            return
+        }
+
+        if (browser) {
+            const root = merge<ThemeNode, ThemeNode>(
+                { type: 'snapshot', [themeName]: themeData },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+            )
+            applyCSS(themeToCSS(root), stylesheet('theme'))
+            return
+        }
+
+        if (config.ssr) {
+            const root = merge<ThemeNode, ThemeNode>(
+                { type: 'snapshot', [themeName]: themeData },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+            )
+            designer.registerThemeCSS(styleToCSS(root))
+            return
+        }
+    }
+}
+
+function styleToCSS(root: StyleNode) {
+    const visitor = new StyleToCSSVisitor()
+    return visitor.root(root)
+}
+
+function themeToCSS(root: ThemeNode) {
     const visitor = new ThemeToCSSVisitor()
-    return visitor.root({ type: 'snapshot', [themeName]: themeData })
+    return visitor.root(root)
 }
 
 function applyCSS(css: any, stylesheet: CSSStyleSheet) {
@@ -61,20 +161,10 @@ function isSplitflowVariant([_, value]) {
     return typeof value == 'boolean'
 }
 
-function registerComponentInternal(
-    componentName: string,
-    elementName: string,
-    variantName?: string
-) {
-    importInternal().then(({ registerComponent }) =>
-        registerComponent(componentName, elementName, variantName)
-    )
-}
-
-function registerASTFragmentInternal(root: ASTRootNode) {
-    importInternal().then(({ registerASTFragment }) => registerASTFragment(root))
-}
-
-function registerThemeFragmentInternal(root: ThemeRootNode) {
-    importInternal().then(({ registerThemeFragment }) => registerThemeFragment(root))
+function componentStyle(componentName: string, root: StyleNode) {
+    if (root) {
+        return Object.fromEntries(
+            Object.entries(root).filter(([key]) => key.startsWith(componentName))
+        )
+    }
 }

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
+import packageJson from './package.json'
 
 export default defineConfig({
     plugins: [dts()],
@@ -7,11 +8,12 @@ export default defineConfig({
         lib: {
             entry: {
                 index: './src/lib/index.ts',
-                app: './src/lib/app.ts',
-                style: './src/lib/style.ts',
-                theme: './src/lib/theme.ts',
-                react: './src/lib/react.ts'
+                react: './src/lib/react/index.ts',
+                svelte: './src/lib/svelte/index.ts'
             }
+        },
+        rollupOptions: {
+            external: [...Object.keys(packageJson.peerDependencies)]
         }
     }
 })

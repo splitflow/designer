@@ -1,22 +1,37 @@
-import { playASTFragmentInternal } from '../lib'
 import greenAST from './assets/green-ast.json'
 import redAST from './assets/red-ast.json'
 import resetAST from './assets/reset-ast.json'
 import clearAST from './assets/clear-ast.json'
 import { style } from './Nav.sf'
+import { config } from './Nav.sfc'
+import { getDesigner } from '../lib'
 
 export default function Nav() {
+    requestAnimationFrame(() => {
+        config.subscribe(($config) => {
+            document.getElementById('reset').style.display = $config.reset.enabled(true)
+                ? 'block'
+                : 'none'
+            document.getElementById('red').style.display = $config.red.enabled(false)
+                ? 'block'
+                : 'none'
+            document.getElementById('green').style.display = $config.green.enabled()
+                ? 'block'
+                : 'none'
+        })
+    })
+
     document.body.addEventListener('click', function (event: Event) {
         const element = event.target as HTMLElement
         if (element.id === 'red') {
-            playASTFragmentInternal(clearAST)
-            playASTFragmentInternal(redAST)
+            getDesigner().devtool?.playStyleFragment(clearAST as any)
+            getDesigner().devtool?.playStyleFragment(redAST as any)
         } else if (element.id === 'green') {
-            playASTFragmentInternal(clearAST)
-            playASTFragmentInternal(greenAST)
+            getDesigner().devtool?.playStyleFragment(clearAST as any)
+            getDesigner().devtool?.playStyleFragment(greenAST as any)
         } else if (element.id === 'reset') {
-            playASTFragmentInternal(clearAST)
-            playASTFragmentInternal(resetAST)
+            getDesigner().devtool?.playStyleFragment(clearAST as any)
+            getDesigner().devtool?.playStyleFragment(resetAST as any)
         }
     })
 

@@ -21,20 +21,18 @@ Visit [splitflow.io](https://splitflow.io) to play with the style editor or chec
 npm install @splitflow/designer
 ```
 
-### Create the SplitFlow designer devtool
+### Initialize the SplitFlow designer
 
 ```ts
-import { initializeSplitflowApp } from '@splitflow/designer/app'
-import { createDesignerTool } from '@splitflow/designer'
+import { initializeSplitflowDesigner } from '@splitflow/designer'
 ...
-initializeSplitflowApp({ devtool: true })
-createDesignerTool()
+initializeSplitflowDesigner({ devtool: true })
 ```
 
 ### Register your component classes
 
 ```ts
-import { createStyle } from '@splitflow/designer/style';
+import { createStyle } from '@splitflow/designer';
 ...
 const style = createStyle('MyComponentName');
 ...
@@ -80,7 +78,7 @@ Request a project id on https://splitflow.io/preview
 ### Initialize SplitFlow
 
 ```
-initializeSplitflowApp({ projectId: '<my-project-id>', devtool: true })
+initializeSplitflowDesigner({ projectId: '<my-project-id>', devtool: true })
 ```
 
 ## Going to production
@@ -106,7 +104,6 @@ Alternatively, you can create a `splitflow.config.json` and run `npx @splitflow/
 
 ```ts
 if (process.env.NODE_ENV === 'development')
-    initializeSplitflowApp({ devtool: true })
-    createDesignerTool()
+    initializeSplitflowDesigner({ devtool: true })
 }
 ```
