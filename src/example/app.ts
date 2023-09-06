@@ -5,12 +5,12 @@ import { style } from './App.sf'
 import { theme } from './Light.sft'
 import { initializeSplitflowDesigner } from '../lib'
 
-initializeSplitflowDesigner({ devtool: true })
+initializeSplitflowDesigner({ devtool: true, moduleId: undefined })
 
 function App() {
     return `
         <div class="${theme()}">
-            <div class="${style.root()}">
+            <div class="app ${style.root()}">
                 ${Nav()}
                 ${Body()}
             </div>

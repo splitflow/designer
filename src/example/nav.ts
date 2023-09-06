@@ -4,7 +4,7 @@ import resetAST from './assets/reset-ast.json'
 import clearAST from './assets/clear-ast.json'
 import { style } from './Nav.sf'
 import { config } from './Nav.sfc'
-import { getDesigner } from '../lib'
+import { getDefaultDesigner } from '../lib'
 
 export default function Nav() {
     requestAnimationFrame(() => {
@@ -23,15 +23,17 @@ export default function Nav() {
 
     document.body.addEventListener('click', function (event: Event) {
         const element = event.target as HTMLElement
+        const designer = getDefaultDesigner()
+
         if (element.id === 'red') {
-            getDesigner().devtool?.playStyleFragment(clearAST as any)
-            getDesigner().devtool?.playStyleFragment(redAST as any)
+            designer.devtool?.playStyleFragment(clearAST as any, designer.pod)
+            designer.devtool?.playStyleFragment(redAST as any, designer.pod)
         } else if (element.id === 'green') {
-            getDesigner().devtool?.playStyleFragment(clearAST as any)
-            getDesigner().devtool?.playStyleFragment(greenAST as any)
+            designer.devtool?.playStyleFragment(clearAST as any, designer.pod)
+            designer.devtool?.playStyleFragment(greenAST as any, designer.pod)
         } else if (element.id === 'reset') {
-            getDesigner().devtool?.playStyleFragment(clearAST as any)
-            getDesigner().devtool?.playStyleFragment(resetAST as any)
+            designer.devtool?.playStyleFragment(clearAST as any, designer.pod)
+            designer.devtool?.playStyleFragment(resetAST as any, designer.pod)
         }
     })
 

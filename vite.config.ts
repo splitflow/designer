@@ -5,6 +5,7 @@ import packageJson from './package.json'
 export default defineConfig({
     plugins: [dts()],
     build: {
+        minify: false,
         lib: {
             entry: {
                 index: './src/lib/index.ts',
@@ -13,7 +14,14 @@ export default defineConfig({
             }
         },
         rollupOptions: {
-            external: [...Object.keys(packageJson.peerDependencies)]
+            external: [
+                ...withEntryPoints(Object.keys(packageJson.dependencies)),
+                ...withEntryPoints(Object.keys(packageJson.peerDependencies))
+            ]
         }
     }
 })
+
+function withEntryPoints(deps: string[]) {
+    return deps.map((v) => new RegExp(`^${v}.*$`))
+}

@@ -11,45 +11,79 @@ export function importDevtool() {
         (importPromise = import(
             /* webpackIgnore: true */
             // @ts-ignore
-            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-1.0.x.js'
+            //'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-1.0.x.js'
+            'http://localhost:3000/index.js'
         ))
     )
 }
 
 export interface DevtoolConfig {
     projectId?: string
-    include?: string[]
 }
 
 export function isDevtool(arg: any): arg is Devtool {
     return typeof arg?.destroy === 'function'
 }
 
+export interface PodNode {
+    podName: string
+    podId?: string
+}
+
+export interface ComponentNode {
+    componentName: string
+    variantName?: string
+}
+
+export interface ElementNode {
+    elementName: string
+    variantName: string
+}
+
+export interface OptionNode {
+    optionName: string
+    enabled?: EnabledNode
+    text?: StringNode
+    svg?: SVGNode
+}
+
+export interface EnabledNode {
+    value: boolean
+    definition: SchemaDef
+}
+
+export interface StringNode {
+    value: string
+    definition: StringDef
+}
+
+export interface SVGNode {
+    value: string
+    definition: SchemaDef
+}
+
+export interface PropertyNode {
+    propertyName: string
+    value: unknown
+    definition: SchemaDef
+}
+
 export interface Devtool {
     destroy: () => void
     show?: (element?: Element) => void
     hide?: () => void
-    registerStyleFragment: (root: StyleNode) => void
+    registerStyleFragment: (fragment: StyleNode, pod: PodNode) => void
     registerThemeFragment: (root: ThemeNode) => void
-    registerElement: (componentName: string, elementName: string, variantName?: string) => void
-    playStyleFragment: (root: StyleNode) => void
-    registerConfigFragment: (root: ConfigNode) => void
-    registerOptionEnabled: (componentName: string, optionName: string, enabled: boolean) => void
-    registerOptionSVG: (componentName: string, optionName: string, value: string) => void
-    registerOptionText: (
-        componentName: string,
-        optionName: string,
-        value: string,
-        definition: StringDef
+    registerElement: (pod: PodNode, component: ComponentNode, element: ElementNode) => void
+    playStyleFragment: (fragment: StyleNode, pod: PodNode) => void
+    registerConfigFragment: (fragment: ConfigNode, pod: PodNode) => void
+    registerOption: (
+        pod: PodNode,
+        component: ComponentNode,
+        option: OptionNode,
+        property?: PropertyNode
     ) => void
-    registerOptionProperty: (
-        componentName: string,
-        optionName: string,
-        propertyName: string,
-        value: unknown,
-        definition: SchemaDef
-    ) => void
-    configuration: Readable<ConfigNode>
+    configuration: (pod: PodNode) => Readable<ConfigNode>
 }
 
 export function createDevtool(config?: DevtoolConfig, element?: Element): Devtool {
@@ -57,17 +91,13 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
         ({ createDevtoolApp }) => createDevtoolApp(config, element) as Devtool
     )
 
-    function include(componentName: string) {
-        return config?.include?.indexOf(componentName) != -1 ?? true
-    }
-
     let registeredConfigFragment: ConfigNode
 
     return {
-        get configuration() {
+        configuration(pod: PodNode) {
             return deferred(
                 registeredConfigFragment,
-                promise.then((dt) => dt.configuration)
+                promise.then((dt) => dt.configuration(pod))
             )
         },
         destroy() {
@@ -79,56 +109,29 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
         hide() {
             promise.then((dt) => dt.hide())
         },
-        registerStyleFragment(root: StyleNode) {
-            promise.then((dt) => dt.registerStyleFragment(root))
+        registerStyleFragment(fragment: StyleNode, pod: PodNode) {
+            promise.then((dt) => dt.registerStyleFragment(fragment, pod))
         },
-        registerThemeFragment(root: ThemeNode) {
-            promise.then((dt) => dt.registerThemeFragment(root))
+        registerThemeFragment(fragment: ThemeNode) {
+            promise.then((dt) => dt.registerThemeFragment(fragment))
         },
-        registerElement(componentName: string, elementName: string, variantName?: string) {
-            if (include(componentName)) {
-                promise.then((dt) => dt.registerElement(componentName, elementName, variantName))
-            }
+        registerElement(pod: PodNode, component: ComponentNode, element: ElementNode) {
+            promise.then((dt) => dt.registerElement(pod, component, element))
         },
-        playStyleFragment(root: StyleNode) {
-            promise.then((dt) => dt.playStyleFragment(root))
+        playStyleFragment(fragment: StyleNode, pod: PodNode) {
+            promise.then((dt) => dt.playStyleFragment(fragment, pod))
         },
-        registerConfigFragment(root: ConfigNode) {
-            registeredConfigFragment = root
-            promise.then((dt) => dt.registerConfigFragment(root))
+        registerConfigFragment(fragment: ConfigNode, pod: PodNode) {
+            registeredConfigFragment = fragment
+            promise.then((dt) => dt.registerConfigFragment(fragment, pod))
         },
-        registerOptionEnabled(componentName: string, optionName: string, enabled: boolean) {
-            promise.then((dt) => dt.registerOptionEnabled(componentName, optionName, enabled))
-        },
-        registerOptionSVG(componentName: string, optionName: string, value: string) {
-            promise.then((dt) => dt.registerOptionSVG(componentName, optionName, value))
-        },
-        registerOptionText(
-            componentName: string,
-            optionName: string,
-            value: string,
-            definition: StringDef
+        registerOption(
+            pod: PodNode,
+            component: ComponentNode,
+            option: OptionNode,
+            property?: PropertyNode
         ) {
-            promise.then((dt) =>
-                dt.registerOptionText(componentName, optionName, value, definition)
-            )
-        },
-        registerOptionProperty(
-            componentName: string,
-            optionName: string,
-            propertyName: string,
-            value: unknown,
-            definition: SchemaDef
-        ) {
-            promise.then((dt) =>
-                dt.registerOptionProperty(
-                    componentName,
-                    optionName,
-                    propertyName,
-                    value,
-                    definition
-                )
-            )
+            promise.then((dt) => dt.registerOption(pod, component, option, property))
         }
     }
 }

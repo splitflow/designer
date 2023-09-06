@@ -1,6 +1,6 @@
 import { ThemeDataNode } from '@splitflow/lib/style'
 import { themeInjector } from './injectors'
-import { SplitflowDesigner, getDesigner } from './designer'
+import { SplitflowDesigner, getDefaultDesigner } from './designer'
 import { themeClassNameFormatter } from './formatters'
 
 export type Theme = () => string
@@ -42,7 +42,7 @@ export function createTheme(arg1: unknown, arg2: unknown): any {
     }
 
     const fn = () => {
-        injectors.theme?.(designer ?? getDesigner())
+        injectors.theme?.(designer ?? getDefaultDesigner())
         return formatters.className().join(' ')
     }
     fn._injectors = injectors

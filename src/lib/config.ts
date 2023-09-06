@@ -1,10 +1,7 @@
 import { derived, type Readable } from 'svelte/store'
-import {
-    type SchemaDef,
-    type ExpressionVariables
-} from '@splitflow/core/definition'
+import { type SchemaDef, type ExpressionVariables } from '@splitflow/core/definition'
 import { ConfigNode, SplitflowConfigDef } from '@splitflow/lib/config'
-import { getDesigner, SplitflowDesigner } from './designer'
+import { getDefaultDesigner, SplitflowDesigner } from './designer'
 import { readable } from '@splitflow/core/stores'
 import { configAccessor } from './accessor'
 import {
@@ -38,7 +35,14 @@ export function createConfig(
     componentName: string,
     configDef?: SplitflowConfigDef
 ): Readable<Config>
-export function createConfig(parent: Readable<Config>, designer: SplitflowDesigner): Readable<Config>
+
+export function createConfig(
+    parent: Readable<Config>,
+    designer: SplitflowDesigner
+): Readable<Config>
+
+export function createConfig(componentName: string, designer: SplitflowDesigner): Readable<Config>
+
 export function createConfig(arg1: unknown, arg2: unknown) {
     let accessors: Accessors = {}
     let injectors: Injectors = {}
@@ -54,7 +58,8 @@ export function createConfig(arg1: unknown, arg2: unknown) {
 
     if (typeof arg1 === 'string') {
         const componentName = arg1
-        const configDef = arg2 as SplitflowConfigDef
+        const configDef =
+            arg2 instanceof SplitflowDesigner ? undefined : (arg2 as SplitflowConfigDef)
         accessors.config = configAccessor(componentName, configDef)
         injectors.optionEnabled = optionEnabledInjector(componentName)
         injectors.optionText = optionTextInjector(componentName)
@@ -71,7 +76,7 @@ export function createConfig(arg1: unknown, arg2: unknown) {
     }
 
     const { subscribe } = derived(
-        deferred(() => accessors.config(designer ?? getDesigner())),
+        deferred(() => accessors.config(designer ?? getDefaultDesigner())),
         ($config) => {
             return new Proxy(
                 {},
@@ -82,7 +87,7 @@ export function createConfig(arg1: unknown, arg2: unknown) {
                             injectors,
                             formatters,
                             $config,
-                            designer ?? getDesigner()
+                            designer ?? getDefaultDesigner()
                         )
                     }
                 }

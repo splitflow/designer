@@ -1,6 +1,6 @@
 @import "./reset.css";
 
-.sf-App-root {
+.app {
   position: fixed;
   top: 0;
   bottom: 0;
