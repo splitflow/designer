@@ -57,6 +57,15 @@ export function getDefaultDesigner(): SplitflowDesigner {
     return NAMESPACE.designer ?? initializeSplitflowDesigner()
 }
 
+export function isSplitflowDesigner(value: any): value is SplitflowDesigner {
+    // The instanceof operator returns false when it shouldn't in some cases. We use duck typing instead
+    // The issue is relate to the app packaging https://stackoverflow.com/a/75977756
+    return (
+        typeof value?.registerStyleCss === 'function' &&
+        typeof value?.registerThemeCss === 'function'
+    )
+}
+
 export class SplitflowDesigner {
     constructor(config: DesignerConfig, devtool: Devtool, registry: SSRRegistry) {
         this.config = config
@@ -71,11 +80,11 @@ export class SplitflowDesigner {
     definitions: Definitions
 
     async initialize() {
-        if (!this.devtool && this.pod.podId) {
+        if (!this.devtool) {
             const [style, theme, config] = await Promise.all([
-                getStyleDefinition(this.pod.podId),
-                getThemeDefinition(this.pod.podId),
-                getConfigDefinition(this.pod.podId)
+                this.pod.podId && getStyleDefinition(this.pod.podId),
+                this.config.projectId && getThemeDefinition(this.config.projectId),
+                this.pod.podId && getConfigDefinition(this.pod.podId)
             ])
             this.definitions = { style, theme, config }
         }

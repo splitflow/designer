@@ -172,8 +172,8 @@ export function themeInjector(themeName: string, themeData: ThemeDataNode) {
 
         if (browser) {
             const root = merge<ThemeNode, ThemeNode>(
-                { type: 'snapshot', [themeName]: themeData },
-                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+                { type: 'snapshot', [themeName]: themeData ?? {} },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] ?? {} }
             )
             applyCSS(themeToCSS(root), stylesheet('theme'))
             return
@@ -181,8 +181,8 @@ export function themeInjector(themeName: string, themeData: ThemeDataNode) {
 
         if (config.ssr) {
             const root = merge<ThemeNode, ThemeNode>(
-                { type: 'snapshot', [themeName]: themeData },
-                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] }
+                { type: 'snapshot', [themeName]: themeData ?? {} },
+                { type: 'snapshot', [themeName]: definitions.theme?.[themeName] ?? {} }
             )
             designer.registerThemeCss(themeToCSS(root))
             return
@@ -201,9 +201,6 @@ function themeToCSS(root: ThemeNode) {
 }
 
 function applyCSS(css: any, stylesheet: CSSStyleSheet) {
-    console.log('applyCss')
-    console.log(css)
-
     for (let [selectorText, properties] of Object.entries(css)) {
         const rule = cssRule(stylesheet, selectorText)
         for (let [propertyName, value] of Object.entries(properties)) {

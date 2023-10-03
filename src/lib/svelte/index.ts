@@ -3,6 +3,7 @@ import { Style, createStyle as _createStyle } from '../style'
 import { SplitflowDesigner } from '../designer'
 import { Config, createConfig as _createConfig } from '../config'
 import { Readable } from 'svelte/store'
+import { Theme, createTheme as _createTheme } from '../theme'
 
 const SPLITFLOW_DESIGNER_SYMBOL = Symbol('SplitflowDesigner')
 
@@ -27,6 +28,22 @@ export function createStyle(arg1: any) {
     if (arg1) {
         const style = arg1 as Style
         return designer ? _createStyle(style, designer) : style
+    }
+}
+
+export function createTheme(themeName: string): Theme
+export function createTheme(theme: Theme): Theme
+export function createTheme(arg1: any) {
+    const designer = getContext<SplitflowDesigner>(SplitflowDesigner)
+
+    if (typeof arg1 === 'string') {
+        const themeName = arg1
+        return _createTheme(themeName, designer)
+    }
+
+    if (arg1) {
+        const theme = arg1 as Theme
+        return designer ? _createTheme(theme, designer) : theme
     }
 }
 

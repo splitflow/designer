@@ -1,7 +1,7 @@
 import { derived, type Readable } from 'svelte/store'
 import { type SchemaDef, type ExpressionVariables } from '@splitflow/core/definition'
 import { ConfigNode, SplitflowConfigDef } from '@splitflow/lib/config'
-import { getDefaultDesigner, SplitflowDesigner } from './designer'
+import { getDefaultDesigner, isSplitflowDesigner, SplitflowDesigner } from './designer'
 import { readable } from '@splitflow/core/stores'
 import { configAccessor } from './accessor'
 import {
@@ -58,8 +58,7 @@ export function createConfig(arg1: unknown, arg2: unknown) {
 
     if (typeof arg1 === 'string') {
         const componentName = arg1
-        const configDef =
-            arg2 instanceof SplitflowDesigner ? undefined : (arg2 as SplitflowConfigDef)
+        const configDef = isSplitflowDesigner(arg2) ? undefined : (arg2 as SplitflowConfigDef)
         accessors.config = configAccessor(componentName, configDef)
         injectors.optionEnabled = optionEnabledInjector(componentName)
         injectors.optionText = optionTextInjector(componentName)
@@ -71,7 +70,7 @@ export function createConfig(arg1: unknown, arg2: unknown) {
         formatters.optionProperty = optionPropertyFormatter(componentName)
     }
 
-    if (arg2 instanceof SplitflowDesigner) {
+    if (isSplitflowDesigner(arg2)) {
         designer = arg2
     }
 

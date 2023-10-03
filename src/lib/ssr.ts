@@ -5,10 +5,10 @@ export interface SSRRegistry {
 
 export function formatHeaders(registry: SSRRegistry) {
     return `
-        <style type="text/css" data-splitflow-id="style">
+        <style type="text/css" data-splitflow-id="style-ssr">
             ${formatCss(registry.style)}
         </style>
-        <style type="text/css" data-splitflow-id="theme">
+        <style type="text/css" data-splitflow-id="theme-ssr">
             ${formatCss(registry.theme)}
         </style>
     `

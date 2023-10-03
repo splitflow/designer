@@ -1,7 +1,7 @@
 import { SplitflowStyleDef } from '@splitflow/lib/style'
 import { styleInjector, elementInjector } from './injectors'
 import { classNameFormatter, cssClassNameFormatter } from './formatters'
-import { SplitflowDesigner, getDefaultDesigner } from './designer'
+import { SplitflowDesigner, getDefaultDesigner, isSplitflowDesigner } from './designer'
 
 export interface Style {
     [elementName: string]: (variants?: Variants) => string
@@ -55,7 +55,7 @@ export function createStyle(arg1: unknown, arg2?: unknown): any {
     if (typeof arg1 === 'string') {
         const componentName = arg1
         const styleDef =
-            isCSSStyleDef(arg2) || arg2 instanceof SplitflowDesigner
+            isCSSStyleDef(arg2) || isSplitflowDesigner(arg2)
                 ? undefined
                 : (arg2 as SplitflowStyleDef)
 
@@ -69,7 +69,7 @@ export function createStyle(arg1: unknown, arg2?: unknown): any {
         formatters.cssClassName = cssClassNameFormatter(cssStyleDeftyleDef)
     }
 
-    if (arg2 instanceof SplitflowDesigner) {
+    if (isSplitflowDesigner(arg2)) {
         designer = arg2
     }
 
