@@ -1,6 +1,7 @@
+import { Error, firstError } from '@splitflow/lib'
+import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
 import { Devtool, createDevtool } from './devtool'
-import { ConfigNode } from '@splitflow/lib/config'
 import { getConfigDefinition, getStyleDefinition, getThemeDefinition } from './gateway'
 import { SSRRegistry, formatCss, formatHeaders } from './ssr'
 
@@ -46,15 +47,18 @@ export function createSplitflowDesigner(config?: DesignerConfig) {
     return createDesigner(config)
 }
 
-export function initializeSplitflowDesigner(config?: DesignerConfig) {
+export async function initializeSplitflowDesigner(config?: DesignerConfig) {
     if (!NAMESPACE.designer) {
         NAMESPACE.designer = createDesigner(config)
     }
-    return NAMESPACE.designer
+    return NAMESPACE.designer.initialize()
 }
 
 export function getDefaultDesigner(): SplitflowDesigner {
-    return NAMESPACE.designer ?? initializeSplitflowDesigner()
+    if (!NAMESPACE.designer) {
+        NAMESPACE.designer = createDesigner()
+    }
+    return NAMESPACE.designer
 }
 
 export function isSplitflowDesigner(value: any): value is SplitflowDesigner {
@@ -78,17 +82,29 @@ export class SplitflowDesigner {
     devtool: Devtool
     registry: SSRRegistry
     definitions: Definitions
+    #initialize: Promise<{ designer?: SplitflowDesigner; error?: Error }>
 
-    async initialize() {
-        if (!this.devtool) {
-            const [style, theme, config] = await Promise.all([
+    async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
+        return (this.#initialize ??= (async () => {
+            if (this.devtool) return this.devtool.boot(this.pod)
+
+            const [result1, result2, result3] = await Promise.all([
                 this.pod.podId && getStyleDefinition(this.pod.podId),
                 this.config.projectId && getThemeDefinition(this.config.projectId),
                 this.pod.podId && getConfigDefinition(this.pod.podId)
             ])
-            this.definitions = { style, theme, config }
-        }
-        return this
+
+            const errorResult = firstError([result1, result2, result3])
+            if (errorResult) return errorResult
+
+            this.definitions = {
+                style: result1?.node as StyleNode,
+                theme: result2?.node as ThemeNode,
+                config: result3?.node as ConfigNode
+            }
+
+            return { designer: this }
+        })())
     }
 
     get pod() {

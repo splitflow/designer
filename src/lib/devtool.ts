@@ -1,5 +1,6 @@
 import { SchemaDef, StringDef } from '@splitflow/core/definition'
 import { Readable, readable } from '@splitflow/core/stores'
+import { Error } from '@splitflow/lib'
 import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
 
@@ -69,6 +70,7 @@ export interface PropertyNode {
 }
 
 export interface Devtool {
+    boot: (pod?: PodNode) => Promise<{ error?: Error }>
     destroy: () => void
     show?: (element?: Element) => void
     hide?: () => void
@@ -99,6 +101,10 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
                 registeredConfigFragment,
                 promise.then((dt) => dt.configuration(pod))
             )
+        },
+        boot(pod?: PodNode) {
+            console.log('BOOT1')
+            return promise.then((dt) => dt.boot(pod))
         },
         destroy() {
             promise.then((dt) => dt.destroy())

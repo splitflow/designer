@@ -1,30 +1,20 @@
-import { ConfigNode } from '@splitflow/lib/config'
-import { StyleNode, ThemeNode } from '@splitflow/lib/style'
+import { actionRequest, getResult } from '@splitflow/lib'
+import { GetNodeAction, GetNodeResult } from '@splitflow/lib/design'
 
-const STYLE_ENDPOINT = 'https://main.splitflow.workers.dev/ast'
-const THEME_ENDPOINT = 'https://main.splitflow.workers.dev/theme'
-const CONFIG_ENDPOINT = 'https://config.splitflow.workers.dev'
-
-export async function getStyleDefinition(podId: string): Promise<StyleNode> {
-    const response = await fetch(`${STYLE_ENDPOINT}/${podId}`)
-    if (response.status === 200) {
-        return response.json()
-    }
-    throw new Error(response.statusText)
+export function getStyleDefinition(podId: string) {
+    const action: GetNodeAction = { type: 'get-node', designId: podId, style: true }
+    const response = fetch(actionRequest('design', action))
+    return getResult<GetNodeResult>(response)
 }
 
-export async function getThemeDefinition(podId: string): Promise<ThemeNode> {
-    const response = await fetch(`${THEME_ENDPOINT}/${podId}`)
-    if (response.status === 200) {
-        return response.json()
-    }
-    throw new Error(response.statusText)
+export function getThemeDefinition(podId: string) {
+    const action: GetNodeAction = { type: 'get-node', designId: podId, theme: true }
+    const response = fetch(actionRequest('design', action))
+    return getResult<GetNodeResult>(response)
 }
 
-export async function getConfigDefinition(podId: string): Promise<ConfigNode> {
-    const response = await fetch(`${CONFIG_ENDPOINT}/${podId}`)
-    if (response.status === 200) {
-        return response.json()
-    }
-    throw new Error(response.statusText)
+export function getConfigDefinition(podId: string) {
+    const action: GetNodeAction = { type: 'get-node', designId: podId, config: true }
+    const response = fetch(actionRequest('design', action))
+    return getResult<GetNodeResult>(response)
 }
