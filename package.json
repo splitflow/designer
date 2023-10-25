@@ -1,6 +1,6 @@
 {
     "name": "@splitflow/designer",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Splitflow designer tool",
     "author": "team@splitflow.io",
     "homepage": "https://github.com/splitflow/designer#readme",
@@ -21,7 +21,7 @@
         ".": {
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
-            "types":  "./dist/index.d.ts"
+            "types": "./dist/index.d.ts"
         },
         "./react": {
             "import": "./dist/react.js",
@@ -64,7 +64,7 @@
     },
     "peerDependencies": {
         "react": ">=16.3.0",
-        "svelte": ">=4.1.2"
+        "svelte": ">=3.57.0"
     },
     "peerDependenciesMeta": {
         "react": {
@@ -75,7 +75,7 @@
         }
     },
     "dependencies": {
-        "@splitflow/core": "^2.0.0",
-        "@splitflow/lib": "^1.0.0"
+        "@splitflow/core": "^2.1.0",
+        "@splitflow/lib": "^1.1.0"
     }
 }

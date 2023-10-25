@@ -1,6 +1,7 @@
 import { ConfigNode } from '@splitflow/lib/config'
 import { CSSStyleDef, Variants } from './style'
 import { ExpressionVariables, StringDef, compile } from '@splitflow/core/definition'
+import { SplitflowDesigner, discriminator } from './designer'
 
 export function optionEnabledFormatter(componentName: string) {
     return (optionName: string, value: boolean, config: ConfigNode) => {
@@ -24,10 +25,7 @@ export function optionTextFormatter(componentName: string) {
 
 export function optionSVGFormatter(componentName: string) {
     return (optionName: string, data: string, config: ConfigNode) => {
-        return (
-            'data:image/svg+xml,' +
-            encodeURIComponent(config?.[`${componentName}-${optionName}`]?.content?.svg ?? data)
-        )
+        return config?.[`${componentName}-${optionName}`]?.content?.svg ?? data
     }
 }
 
@@ -38,8 +36,11 @@ export function optionPropertyFormatter(componentName: string) {
 }
 
 export function classNameFormatter(componentName: string) {
-    return (elementName: string, variants: Variants) => {
-        return [`sf-${componentName}-${elementName}`, ...variantsClassNames(variants)]
+    return (elementName: string, variants: Variants, designer: SplitflowDesigner) => {
+        return [
+            elementClassName(componentName, elementName, discriminator(designer.pod)),
+            ...variantsClassNames(variants)
+        ]
     }
 }
 
@@ -53,6 +54,11 @@ export function themeClassNameFormatter(themeName: string) {
     return () => {
         return [`sft-${themeName}`]
     }
+}
+
+function elementClassName(componentName: string, elementName: string, discriminator: string) {
+    if (discriminator) return `sf-${componentName}-${elementName}-${discriminator}`
+    return `sf-${componentName}-${elementName}`
 }
 
 function variantsClassNames(variants: Variants) {

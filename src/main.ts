@@ -1,1 +1,1 @@
-import './example/App.ts'
+import './example/App'

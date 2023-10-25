@@ -1,7 +1,9 @@
+import { Error, firstError } from '@splitflow/lib'
+import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
 import { Devtool, createDevtool } from './devtool'
-import { ConfigNode } from '@splitflow/lib/config'
-import { loadConfigDefinition, loadStyleDefinition, loadThemeDefinition } from './loaders'
+import { getConfigDefinition, getStyleDefinition, getThemeDefinition } from './gateway'
+import { SSRRegistry, formatCss, formatHeaders } from './ssr'
 
 const browser = typeof document !== 'undefined'
 
@@ -13,96 +15,127 @@ const NAMESPACE: Namespace = (globalThis.splitflow ??= {})
 
 export interface DesignerConfig {
     projectId?: string
+    appName?: string
+    appId?: string
+    moduleName?: string
+    moduleId?: string
     devtool?: boolean
-    include?: string[]
     ssr?: boolean
+    remote?: boolean
 }
 
-interface DesignerDefinitions {
+interface Definitions {
     style: StyleNode
     theme: ThemeNode
     config: ConfigNode
 }
 
-export function createSplitflowDesigner(
+export function createDesigner(
     config?: DesignerConfig,
-    definitions?: DesignerDefinitions,
-    devtool?: Devtool
+    devtool?: Devtool,
+    registry?: SSRRegistry,
+    parent?: SplitflowDesigner
 ) {
-    definitions ??= { style: undefined, theme: undefined, config: undefined }
-    devtool ??= config?.devtool && browser ? createDevtool(config) : undefined
     config ??= {}
+    devtool ??= parent?.devtool ?? (config?.devtool && browser ? createDevtool(config) : undefined)
+    registry ??=
+        parent?.registry ?? (config?.ssr && !browser ? { style: {}, theme: {} } : undefined)
 
-    return new SplitflowDesigner(config, definitions, devtool)
+    return new SplitflowDesigner(config, devtool, registry)
 }
 
-export function initializeSplitflowDesigner(
-    config?: DesignerConfig,
-    definitions?: DesignerDefinitions,
-    devtool?: Devtool
-) {
+export function createSplitflowDesigner(config?: DesignerConfig) {
+    return createDesigner(config)
+}
+
+export async function initializeSplitflowDesigner(config?: DesignerConfig) {
     if (!NAMESPACE.designer) {
-        NAMESPACE.designer = createSplitflowDesigner(config, definitions, devtool)
+        NAMESPACE.designer = createDesigner(config)
+    }
+    return NAMESPACE.designer.initialize()
+}
+
+export function getDefaultDesigner(): SplitflowDesigner {
+    if (!NAMESPACE.designer) {
+        NAMESPACE.designer = createDesigner()
     }
     return NAMESPACE.designer
 }
 
-export function getDesigner(): SplitflowDesigner {
-    return NAMESPACE.designer ?? initializeSplitflowDesigner()
+export function isSplitflowDesigner(value: any): value is SplitflowDesigner {
+    // The instanceof operator returns false when it shouldn't in some cases. We use duck typing instead
+    // The issue is relate to the app packaging https://stackoverflow.com/a/75977756
+    return (
+        typeof value?.registerStyleCss === 'function' &&
+        typeof value?.registerThemeCss === 'function'
+    )
 }
 
 export class SplitflowDesigner {
-    constructor(config: DesignerConfig, definitions: DesignerDefinitions, devtool: Devtool) {
+    constructor(config: DesignerConfig, devtool: Devtool, registry: SSRRegistry) {
         this.config = config
-        this.definitions = definitions
         this.devtool = devtool
+        this.registry = registry
+        this.definitions = { style: undefined, theme: undefined, config: undefined }
     }
 
     config: DesignerConfig
-    definitions: DesignerDefinitions
     devtool: Devtool
-    #styleCss: any = {}
-    #themeCss: any = {}
+    registry: SSRRegistry
+    definitions: Definitions
+    #initialize: Promise<{ designer?: SplitflowDesigner; error?: Error }>
 
-    include(componentName: string) {
-        return this.config?.include?.indexOf(componentName) != -1 ?? true
+    async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
+        return (this.#initialize ??= (async () => {
+            if (this.devtool) {
+                return this.devtool.boot(this.pod)
+            }
+
+            if (this.config.remote ?? true) {
+                const [result1, result2, result3] = await Promise.all([
+                    this.pod.podId && getStyleDefinition(this.pod.podId),
+                    this.config.projectId && getThemeDefinition(this.config.projectId),
+                    this.pod.podId && getConfigDefinition(this.pod.podId)
+                ])
+
+                const errorResult = firstError([result1, result2, result3])
+                if (errorResult) return errorResult
+
+                this.definitions = {
+                    style: result1?.node as StyleNode,
+                    theme: result2?.node as ThemeNode,
+                    config: result3?.node as ConfigNode
+                }
+            }
+
+            return { designer: this }
+        })())
     }
 
-    registerStyleCSS(css: any) {
-        this.#styleCss = { ...this.#styleCss, ...css }
+    get pod() {
+        const podName = this.config.moduleName ?? this.config.appName ?? 'App'
+        const podId = this.config.moduleId ?? this.config.appId
+        return { podName, podId }
     }
 
-    registerThemeCSS(css: any) {
-        this.#themeCss = { ...this.#themeCss, ...css }
+    registerStyleCss(css: any) {
+        Object.assign(this.registry.style, css)
     }
 
-    async loadDefinitions() {
-        this.definitions = await loadSplitflowDesignerDefinitions(this.config)
+    registerThemeCss(css: any) {
+        Object.assign(this.registry.theme, css)
     }
 
-    printHeaders() {
-        if (!browser) {
-            return `
-                <style type="text/css" data-splitflow-id="style">
-                    ${formatCss(this.#styleCss)}
-                </style>
-                <style type="text/css" data-splitflow-id="theme">
-                    ${formatCss(this.#themeCss)}
-                </style>
-            `
-        }
+    formatHeaders() {
+        if (!browser) return formatHeaders(this.registry)
     }
 
-    printStyleCss() {
-        if (!browser) {
-            return formatCss(this.#styleCss)
-        }
+    formatStyleCss() {
+        if (!browser) return formatCss(this.registry.style)
     }
 
-    printThemeCss() {
-        if (!browser) {
-            return formatCss(this.#themeCss)
-        }
+    formatThemeCss() {
+        if (!browser) return formatCss(this.registry.theme)
     }
 
     destroy() {
@@ -113,40 +146,6 @@ export class SplitflowDesigner {
     }
 }
 
-export async function loadSplitflowDesignerDefinitions(
-    config: DesignerConfig
-): Promise<DesignerDefinitions> {
-    const [style, theme, _config] = await Promise.all([
-        loadStyleDefinition(config?.projectId),
-        loadThemeDefinition(config?.projectId),
-        loadConfigDefinition(config?.projectId)
-    ])
-    return { style, theme, config: _config }
-}
-
-function formatCss(css: any) {
-    const tokens = []
-
-    for (let [selectorText, properties] of Object.entries(css)) {
-        tokens.push(selectorText)
-        tokens.push('{')
-        for (let [propertyName, value] of Object.entries(properties)) {
-            if (value !== null) {
-                const propertyValue = formatCssProperyValue(value)
-                tokens.push(propertyName)
-                tokens.push(':')
-                tokens.push(propertyValue)
-                tokens.push(';')
-            }
-        }
-        tokens.push('}')
-    }
-    return tokens.join('')
-}
-
-function formatCssProperyValue(value: string) {
-    if (value.charAt(0) === '!') {
-        return `${value.slice(1)} !important`
-    }
-    return value
+export function discriminator(pod: { podName: string; podId?: string }) {
+    return pod.podId ?? (pod.podName === 'App' ? undefined : pod.podName)
 }

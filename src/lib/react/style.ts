@@ -3,7 +3,7 @@ import { elementInjector } from '../injectors'
 import { classNameFormatter } from '../formatters'
 import { Style, Variants, createStyle } from '../style'
 import { SplitflowDesignerContext } from './provider'
-import { SplitflowDesigner, getDesigner } from '../designer'
+import { SplitflowDesigner, getDefaultDesigner } from '../designer'
 
 interface ReactStyle {
     [elementName: string]: React.FunctionComponent
@@ -29,12 +29,13 @@ export function styled<T extends ReactStyle>(arg: unknown, styleDef: T): T {
 
     function wrap([elementName, functionComponent]: [string, React.FunctionComponent]) {
         const wrappedFunctionComponent = React.forwardRef((props, ref) => {
-            const designer = React.useContext(SplitflowDesignerContext) ?? getDesigner()
+            const designer = React.useContext(SplitflowDesignerContext) ?? getDefaultDesigner()
 
             injectors.style?.(designer)
             injectors.element?.(elementName, undefined, designer)
 
-            const className = formatters.className?.(elementName, undefined) ?? [].join(' ')
+            const className =
+                formatters.className?.(elementName, undefined, designer) ?? [].join(' ')
 
             const forwardProps = {
                 ...props,
@@ -56,7 +57,7 @@ interface Injectors {
 }
 
 interface Formatters {
-    className?: (elementName: string, variants: Variants) => string[]
+    className?: (elementName: string, variants: Variants, designer: SplitflowDesigner) => string[]
 }
 
 export function useStyle(style: Style) {
