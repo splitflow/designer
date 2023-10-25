@@ -21,6 +21,7 @@ export interface DesignerConfig {
     moduleId?: string
     devtool?: boolean
     ssr?: boolean
+    remote?: boolean
 }
 
 interface Definitions {
@@ -86,21 +87,25 @@ export class SplitflowDesigner {
 
     async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
         return (this.#initialize ??= (async () => {
-            if (this.devtool) return this.devtool.boot(this.pod)
+            if (this.devtool) {
+                return this.devtool.boot(this.pod)
+            }
 
-            const [result1, result2, result3] = await Promise.all([
-                this.pod.podId && getStyleDefinition(this.pod.podId),
-                this.config.projectId && getThemeDefinition(this.config.projectId),
-                this.pod.podId && getConfigDefinition(this.pod.podId)
-            ])
+            if (this.config.remote ?? true) {
+                const [result1, result2, result3] = await Promise.all([
+                    this.pod.podId && getStyleDefinition(this.pod.podId),
+                    this.config.projectId && getThemeDefinition(this.config.projectId),
+                    this.pod.podId && getConfigDefinition(this.pod.podId)
+                ])
 
-            const errorResult = firstError([result1, result2, result3])
-            if (errorResult) return errorResult
+                const errorResult = firstError([result1, result2, result3])
+                if (errorResult) return errorResult
 
-            this.definitions = {
-                style: result1?.node as StyleNode,
-                theme: result2?.node as ThemeNode,
-                config: result3?.node as ConfigNode
+                this.definitions = {
+                    style: result1?.node as StyleNode,
+                    theme: result2?.node as ThemeNode,
+                    config: result3?.node as ConfigNode
+                }
             }
 
             return { designer: this }

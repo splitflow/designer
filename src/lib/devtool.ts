@@ -12,8 +12,8 @@ export function importDevtool() {
         (importPromise = import(
             /* webpackIgnore: true */
             // @ts-ignore
-            //'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-1.0.x.js'
-            'http://localhost:3000/index.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-2.0.x.js'
+            //'http://localhost:3000/index.js'
         ))
     )
 }
@@ -78,6 +78,7 @@ export interface Devtool {
     registerThemeFragment: (root: ThemeNode) => void
     registerElement: (pod: PodNode, component: ComponentNode, element: ElementNode) => void
     playStyleFragment: (fragment: StyleNode, pod: PodNode) => void
+    selectStyleElement: (pod: PodNode, component: ComponentNode, element?: ElementNode) => void
     registerConfigFragment: (fragment: ConfigNode, pod: PodNode) => void
     registerOption: (
         pod: PodNode,
@@ -103,7 +104,6 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
             )
         },
         boot(pod?: PodNode) {
-            console.log('BOOT1')
             return promise.then((dt) => dt.boot(pod))
         },
         destroy() {
@@ -126,6 +126,9 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
         },
         playStyleFragment(fragment: StyleNode, pod: PodNode) {
             promise.then((dt) => dt.playStyleFragment(fragment, pod))
+        },
+        selectStyleElement(pod: PodNode, component: ComponentNode, element?: ElementNode) {
+            promise.then((dt) => dt.selectStyleElement(pod, component, element))
         },
         registerConfigFragment(fragment: ConfigNode, pod: PodNode) {
             registeredConfigFragment = fragment

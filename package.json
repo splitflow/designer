@@ -1,6 +1,6 @@
 {
     "name": "@splitflow/designer",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Splitflow designer tool",
     "author": "team@splitflow.io",
     "homepage": "https://github.com/splitflow/designer#readme",
@@ -75,7 +75,7 @@
         }
     },
     "dependencies": {
-        "@splitflow/core": "^2.0.0",
-        "@splitflow/lib": "file:../lib"
+        "@splitflow/core": "^2.1.0",
+        "@splitflow/lib": "^1.1.0"
     }
 }
