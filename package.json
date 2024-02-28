@@ -75,7 +75,7 @@
         }
     },
     "dependencies": {
-        "@splitflow/core": "^2.1.0",
+        "@splitflow/core": "file:../core",
         "@splitflow/lib": "file:../lib"
     }
 }

@@ -1,8 +1,8 @@
 import { Error, firstError } from '@splitflow/lib'
 import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
-import { Devtool, createDevtool } from './devtool'
-import { getConfigDefinition, getStyleDefinition, getThemeDefinition } from './gateway'
+import { Devtool, DevtoolKit, createDevtool } from './devtool'
+import { SplitflowDesignerData, loadSplitflowDesignerData } from './loaders'
 import { SSRRegistry, formatCss, formatHeaders } from './ssr'
 
 const browser = typeof document !== 'undefined'
@@ -14,11 +14,12 @@ interface Namespace {
 const NAMESPACE: Namespace = (globalThis.splitflow ??= {})
 
 export interface DesignerConfig {
-    projectId?: string
+    accountId?: string
     appName?: string
     appId?: string
     moduleName?: string
     moduleId?: string
+    moduleType?: string
     devtool?: boolean
     ssr?: boolean
     remote?: boolean
@@ -26,8 +27,8 @@ export interface DesignerConfig {
 
 interface Definitions {
     style: StyleNode
-    theme: ThemeNode
     config: ConfigNode
+    theme: ThemeNode
 }
 
 export function createDesigner(
@@ -85,27 +86,21 @@ export class SplitflowDesigner {
     definitions: Definitions
     #initialize: Promise<{ designer?: SplitflowDesigner; error?: Error }>
 
-    async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
+    async initialize(
+        data?: SplitflowDesignerData
+    ): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
         return (this.#initialize ??= (async () => {
-            if (this.devtool) {
-                return this.devtool.boot(this.pod)
-            }
+            data ??= await loadSplitflowDesignerData(this)
 
-            if (this.config.remote ?? true) {
-                const [result1, result2, result3] = await Promise.all([
-                    this.pod.podId && getStyleDefinition(this.pod.podId),
-                    this.config.projectId && getThemeDefinition(this.config.projectId),
-                    this.pod.podId && getConfigDefinition(this.pod.podId)
-                ])
+            const error = firstError(data)
+            if (error) return { error }
 
-                const errorResult = firstError([result1, result2, result3])
-                if (errorResult) return errorResult
+            if (this.devtool) return this.devtool.boot(this.pod, data)
 
-                this.definitions = {
-                    style: result1?.node as StyleNode,
-                    theme: result2?.node as ThemeNode,
-                    config: result3?.node as ConfigNode
-                }
+            this.definitions = {
+                style: data.getStyleDesignResult?.style as StyleNode,
+                config: data.getConfigDesignResult?.config as ConfigNode,
+                theme: data.getThemeResult?.theme as ThemeNode
             }
 
             return { designer: this }
@@ -113,9 +108,7 @@ export class SplitflowDesigner {
     }
 
     get pod() {
-        const podName = this.config.moduleName ?? this.config.appName ?? 'App'
-        const podId = this.config.moduleId ?? this.config.appId
-        return { podName, podId }
+        return podNode(this.config)
     }
 
     registerStyleCss(css: any) {
@@ -146,6 +139,31 @@ export class SplitflowDesigner {
     }
 }
 
+export function createDesignerKit(
+    config: DesignerConfig,
+    devtool?: DevtoolKit,
+    parent?: SplitflowDesignerKit
+): SplitflowDesignerKit {
+    devtool ??= parent?.devtool ?? (config?.devtool && browser ? createDevtool(config) : undefined)
+
+    return {
+        config,
+        devtool
+    }
+}
+
+export interface SplitflowDesignerKit {
+    config: DesignerConfig
+    devtool?: DevtoolKit
+}
+
 export function discriminator(pod: { podName: string; podId?: string }) {
     return pod.podId ?? (pod.podName === 'App' ? undefined : pod.podName)
+}
+
+export function podNode(config: DesignerConfig) {
+    const podName = config.moduleName ?? config.appName ?? 'App'
+    const podId = config.moduleId ?? config.appId
+    const podType = config.moduleType ?? 'app'
+    return { podName, podId, podType }
 }
