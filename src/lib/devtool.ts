@@ -25,11 +25,11 @@ export interface DevtoolConfig {
 export function isDevtool(arg: any): arg is Devtool {
     return typeof arg?.destroy === 'function'
 }
-  
-export interface DevtoolData {
-}
+
+export interface DevtoolBundle {}
 
 export interface PodNode {
+    podType: string
     podName: string
     podId?: string
 }
@@ -73,15 +73,17 @@ export interface PropertyNode {
 }
 
 export interface Devtool {
-    load: (pod?: PodNode) => Promise<DevtoolData>
-    boot: (pod?: PodNode, data?: DevtoolData) => Promise<{ error?: Error }>
+    load: (pod?: PodNode) => Promise<DevtoolBundle>
+    boot: (pod?: PodNode, data?: DevtoolBundle) => Promise<{ error?: Error }>
     destroy: () => void
     show?: (element?: Element) => void
     hide?: () => void
     registerStyleFragment: (fragment: StyleNode, pod: PodNode) => void
     registerThemeFragment: (root: ThemeNode) => void
     registerElement: (pod: PodNode, component: ComponentNode, element: ElementNode) => void
+    /** used for demo only */
     playStyleFragment: (fragment: StyleNode, pod: PodNode) => void
+    /** used for demo only */
     selectStyleElement: (pod: PodNode, component: ComponentNode, element?: ElementNode) => void
     registerConfigFragment: (fragment: ConfigNode, pod: PodNode) => void
     registerOption: (
@@ -94,7 +96,7 @@ export interface Devtool {
 }
 
 export interface DevtoolKit {
-    load: (pod?: PodNode) => Promise<DevtoolData>
+    load: (pod?: PodNode) => Promise<DevtoolBundle>
 }
 
 export function createDevtool(config?: DevtoolConfig, element?: Element): Devtool {
@@ -114,7 +116,7 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
         load(pod?: PodNode) {
             return promise.then((dt) => dt.load(pod))
         },
-        boot(pod?: PodNode, data?: DevtoolData) {
+        boot(pod?: PodNode, data?: DevtoolBundle) {
             return promise.then((dt) => dt.boot(pod, data))
         },
         destroy() {

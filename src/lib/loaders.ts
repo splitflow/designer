@@ -7,26 +7,39 @@ import {
     GetThemeEndpoint,
     GetThemeResult
 } from '@splitflow/lib/design'
-import { SplitflowDesignerKit, podNode } from './designer'
+import { DesignerConfig, SplitflowDesignerKit } from './designer'
 
-export interface SplitflowDesignerData {
+export interface DesignerBundle {
+    designerConfig: DesignerConfig
     getStyleDesignResult?: GetDesignResult
     getConfigDesignResult?: GetDesignResult
     getThemeResult?: GetThemeResult
 }
 
-export async function loadSplitflowDesignerData(
-    kit: SplitflowDesignerKit
-): Promise<SplitflowDesignerData> {
-    if (kit.devtool) return kit.devtool.load(podNode(kit.config))
-    return loadRemoteSplitflowDesignerData(kit)
+export function isDesignerBundle(
+    bundle: DesignerConfig | DesignerBundle
+): bundle is DesignerBundle {
+    return !!(bundle as any).designerConfig
 }
 
-export async function loadRemoteSplitflowDesignerData(
+export async function loadSplitflowDesignerBundle(
     kit: SplitflowDesignerKit
-): Promise<SplitflowDesignerData> {
+): Promise<DesignerBundle> {
+    if (kit.devtool) {
+        const bundle = await kit.devtool.load(kit.pod)
+        return { designerConfig: kit.config, ...bundle }
+    }
+    if (kit.config.remote) {
+        return loadRemoteSplitflowDesignerBundle(kit)
+    }
+    return { designerConfig: kit.config }
+}
+
+export async function loadRemoteSplitflowDesignerBundle(
+    kit: SplitflowDesignerKit
+): Promise<DesignerBundle> {
     const { accountId } = kit.config
-    const { podId, podType } = podNode(kit.config)
+    const { podId, podType } = kit.pod
 
     if (accountId && podId && podType) {
         const action1: GetDesignAction = {
@@ -57,10 +70,11 @@ export async function loadRemoteSplitflowDesignerData(
         ])
 
         return {
+            designerConfig: kit.config,
             getStyleDesignResult,
             getConfigDesignResult,
             getThemeResult
         }
     }
-    return {}
+    return { designerConfig: kit.config }
 }

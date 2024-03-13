@@ -1,8 +1,8 @@
 import { Error, firstError } from '@splitflow/lib'
 import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
-import { Devtool, DevtoolKit, createDevtool } from './devtool'
-import { SplitflowDesignerData, loadSplitflowDesignerData } from './loaders'
+import { Devtool, DevtoolKit, PodNode, createDevtool } from './devtool'
+import { DesignerBundle, isDesignerBundle, loadSplitflowDesignerBundle } from './loaders'
 import { SSRRegistry, formatCss, formatHeaders } from './ssr'
 
 const browser = typeof document !== 'undefined'
@@ -32,33 +32,35 @@ interface Definitions {
 }
 
 export function createDesigner(
-    config?: DesignerConfig,
+    init: DesignerConfig | DesignerBundle,
     devtool?: Devtool,
     registry?: SSRRegistry,
     parent?: SplitflowDesigner
 ) {
-    config ??= {}
+    const bundle = isDesignerBundle(init) ? init : undefined
+    const config = isDesignerBundle(init) ? init.designerConfig : init
+
     devtool ??= parent?.devtool ?? (config?.devtool && browser ? createDevtool(config) : undefined)
     registry ??=
         parent?.registry ?? (config?.ssr && !browser ? { style: {}, theme: {} } : undefined)
 
-    return new SplitflowDesigner(config, devtool, registry)
+    return new SplitflowDesigner(config, bundle, devtool, registry)
 }
 
-export function createSplitflowDesigner(config?: DesignerConfig) {
-    return createDesigner(config)
+export function createSplitflowDesigner(init: DesignerConfig | DesignerBundle) {
+    return createDesigner(init)
 }
 
-export async function initializeSplitflowDesigner(config?: DesignerConfig) {
+export async function initializeSplitflowDesigner(init: DesignerConfig | DesignerBundle) {
     if (!NAMESPACE.designer) {
-        NAMESPACE.designer = createDesigner(config)
+        NAMESPACE.designer = createDesigner(init)
     }
     return NAMESPACE.designer.initialize()
 }
 
 export function getDefaultDesigner(): SplitflowDesigner {
     if (!NAMESPACE.designer) {
-        NAMESPACE.designer = createDesigner()
+        NAMESPACE.designer = createDesigner({})
     }
     return NAMESPACE.designer
 }
@@ -73,36 +75,45 @@ export function isSplitflowDesigner(value: any): value is SplitflowDesigner {
 }
 
 export class SplitflowDesigner {
-    constructor(config: DesignerConfig, devtool: Devtool, registry: SSRRegistry) {
+    constructor(
+        config: DesignerConfig,
+        bundle: DesignerBundle,
+        devtool: Devtool,
+        registry: SSRRegistry
+    ) {
         this.config = config
+        this.bundle = bundle
         this.devtool = devtool
         this.registry = registry
         this.definitions = { style: undefined, theme: undefined, config: undefined }
     }
 
     config: DesignerConfig
+    bundle: DesignerBundle
     devtool: Devtool
     registry: SSRRegistry
     definitions: Definitions
     #initialize: Promise<{ designer?: SplitflowDesigner; error?: Error }>
 
-    async initialize(
-        data?: SplitflowDesignerData
-    ): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
+    async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
         return (this.#initialize ??= (async () => {
-            data ??= await loadSplitflowDesignerData(this)
+            this.bundle ??= await loadSplitflowDesignerBundle(this)
 
-            const error = firstError(data)
+            const error = firstError(this.bundle)
             if (error) return { error }
 
-            if (this.devtool) return this.devtool.boot(this.pod, data)
-
-            this.definitions = {
-                style: data.getStyleDesignResult?.style as StyleNode,
-                config: data.getConfigDesignResult?.config as ConfigNode,
-                theme: data.getThemeResult?.theme as ThemeNode
+            if (this.devtool) {
+                const { error } = await this.devtool.boot(this.pod, this.bundle)
+                return error ? { error } : { designer: this }
             }
 
+            this.definitions = {
+                style: this.bundle.getStyleDesignResult?.style,
+                config: this.bundle.getConfigDesignResult?.config,
+                theme: this.bundle.getThemeResult?.theme
+            }
+
+            this.bundle = undefined
             return { designer: this }
         })())
     }
@@ -148,12 +159,16 @@ export function createDesignerKit(
 
     return {
         config,
-        devtool
+        devtool,
+        get pod() {
+            return podNode(config)
+        }
     }
 }
 
 export interface SplitflowDesignerKit {
     config: DesignerConfig
+    pod: PodNode
     devtool?: DevtoolKit
 }
 
@@ -161,7 +176,7 @@ export function discriminator(pod: { podName: string; podId?: string }) {
     return pod.podId ?? (pod.podName === 'App' ? undefined : pod.podName)
 }
 
-export function podNode(config: DesignerConfig) {
+function podNode(config: DesignerConfig) {
     const podName = config.moduleName ?? config.appName ?? 'App'
     const podId = config.moduleId ?? config.appId
     const podType = config.moduleType ?? 'app'
