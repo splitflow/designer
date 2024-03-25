@@ -12,21 +12,24 @@ export function importDevtool() {
         (importPromise = import(
             /* webpackIgnore: true */
             // @ts-ignore
-            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-2.0.x.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-2.1.x.js'
             //'http://localhost:3000/index.js'
         ))
     )
 }
 
 export interface DevtoolConfig {
-    projectId?: string
+    accountId?: string
 }
 
 export function isDevtool(arg: any): arg is Devtool {
     return typeof arg?.destroy === 'function'
 }
 
+export interface DevtoolBundle {}
+
 export interface PodNode {
+    podType: string
     podName: string
     podId?: string
 }
@@ -70,14 +73,17 @@ export interface PropertyNode {
 }
 
 export interface Devtool {
-    boot: (pod?: PodNode) => Promise<{ error?: Error }>
+    load: (pod?: PodNode) => Promise<DevtoolBundle>
+    boot: (pod?: PodNode, data?: DevtoolBundle) => Promise<{ error?: Error }>
     destroy: () => void
     show?: (element?: Element) => void
     hide?: () => void
     registerStyleFragment: (fragment: StyleNode, pod: PodNode) => void
     registerThemeFragment: (root: ThemeNode) => void
     registerElement: (pod: PodNode, component: ComponentNode, element: ElementNode) => void
+    /** used for demo only */
     playStyleFragment: (fragment: StyleNode, pod: PodNode) => void
+    /** used for demo only */
     selectStyleElement: (pod: PodNode, component: ComponentNode, element?: ElementNode) => void
     registerConfigFragment: (fragment: ConfigNode, pod: PodNode) => void
     registerOption: (
@@ -87,6 +93,10 @@ export interface Devtool {
         property?: PropertyNode
     ) => void
     configuration: (pod: PodNode) => Readable<ConfigNode>
+}
+
+export interface DevtoolKit {
+    load: (pod?: PodNode) => Promise<DevtoolBundle>
 }
 
 export function createDevtool(config?: DevtoolConfig, element?: Element): Devtool {
@@ -103,8 +113,11 @@ export function createDevtool(config?: DevtoolConfig, element?: Element): Devtoo
                 promise.then((dt) => dt.configuration(pod))
             )
         },
-        boot(pod?: PodNode) {
-            return promise.then((dt) => dt.boot(pod))
+        load(pod?: PodNode) {
+            return promise.then((dt) => dt.load(pod))
+        },
+        boot(pod?: PodNode, data?: DevtoolBundle) {
+            return promise.then((dt) => dt.boot(pod, data))
         },
         destroy() {
             promise.then((dt) => dt.destroy())

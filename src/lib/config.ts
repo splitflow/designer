@@ -1,8 +1,7 @@
-import { derived, type Readable } from 'svelte/store'
 import { type SchemaDef, type ExpressionVariables } from '@splitflow/core/definition'
+import { Readable, derived, readable } from '@splitflow/core/stores'
 import { ConfigNode, SplitflowConfigDef } from '@splitflow/lib/config'
 import { getDefaultDesigner, isSplitflowDesigner, SplitflowDesigner } from './designer'
-import { readable } from '@splitflow/core/stores'
 import { configAccessor } from './accessor'
 import {
     optionEnabledInjector,

@@ -1,6 +1,7 @@
 export * from './config'
 export * from './designer'
 export * from './devtool'
+export * from './loaders'
 export * from './ssr'
 export * from './style'
 export * from './theme'

@@ -5,7 +5,7 @@ import { style } from './App.sf'
 import { theme } from './Light.sft'
 import { initializeSplitflowDesigner } from '../lib'
 
-initializeSplitflowDesigner({ devtool: true, moduleId: undefined })
+initializeSplitflowDesigner({ devtool: true })
 
 function App() {
     return `
