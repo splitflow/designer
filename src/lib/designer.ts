@@ -2,7 +2,12 @@ import { Error, firstError } from '@splitflow/lib'
 import { ConfigNode } from '@splitflow/lib/config'
 import { StyleNode, ThemeNode } from '@splitflow/lib/style'
 import { Devtool, DevtoolKit, PodNode, createDevtool } from './devtool'
-import { DesignerBundle, isDesignerBundle, loadSplitflowDesignerBundle } from './loaders'
+import {
+    DesignerBundle,
+    isDesignerBundle,
+    isFulfilled,
+    loadSplitflowDesignerBundle
+} from './loaders'
 import { SSRRegistry, formatCss, formatHeaders } from './ssr'
 
 const browser = typeof document !== 'undefined'
@@ -36,7 +41,7 @@ export function createDesigner(
     devtool?: Devtool,
     registry?: SSRRegistry,
     parent?: SplitflowDesigner
-) {
+) {console.log('TEST')
     const bundle = isDesignerBundle(init) ? init : undefined
     const config = isDesignerBundle(init) ? init.designerConfig : init
 
@@ -97,8 +102,12 @@ export class SplitflowDesigner {
 
     async initialize(): Promise<{ designer?: SplitflowDesigner; error?: Error }> {
         return (this.#initialize ??= (async () => {
-            this.bundle ??= await loadSplitflowDesignerBundle(this)
-
+            console.log('init b')
+            console.log(this.bundle)
+            this.bundle = isFulfilled(this.bundle)
+                ? this.bundle
+                : await loadSplitflowDesignerBundle(this)
+                console.log(this.bundle)
             const error = firstError(this.bundle)
             if (error) return { error }
 

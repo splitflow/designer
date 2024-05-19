@@ -22,10 +22,15 @@ export function isDesignerBundle(
     return !!(bundle as any).designerConfig
 }
 
+export function isFulfilled(bundle: DesignerBundle) {
+    return !!bundle?.getStyleDesignResult ?? false
+}
+
 export async function loadSplitflowDesignerBundle(
     kit: SplitflowDesignerKit
 ): Promise<DesignerBundle> {
     if (kit.devtool) {
+        console.log('devtool load')
         const bundle = await kit.devtool.load(kit.pod)
         return { designerConfig: kit.config, ...bundle }
     }
