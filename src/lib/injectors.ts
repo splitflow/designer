@@ -99,14 +99,14 @@ export function optionPropertyInjector(componentName: string) {
 }
 
 export function elementInjector(componentName: string) {
-    return (elementName: string, variants: Variants, designer: SplitflowDesigner) => {
+    return (elementName: string, variants: Variants, preset: 'svg', designer: SplitflowDesigner) => {
         const { devtool, pod } = designer
 
         if (devtool) {
             devtool.registerElement(
                 pod,
                 { componentName, variantName: 'default' },
-                { elementName, variantName: 'default' }
+                { elementName, variantName: 'default', preset }
             )
 
             if (variants) {
@@ -117,13 +117,13 @@ export function elementInjector(componentName: string) {
                             devtool.registerElement(
                                 pod,
                                 { componentName, variantName },
-                                { elementName, variantName: 'default' }
+                                { elementName, variantName: 'default', preset }
                             )
                         } else {
                             devtool.registerElement(
                                 pod,
                                 { componentName, variantName: 'default' },
-                                { elementName, variantName }
+                                { elementName, variantName, preset }
                             )
                         }
                     })
