@@ -32,7 +32,7 @@ export function styled<T extends ReactStyle>(arg: unknown, styleDef: T): T {
             const designer = React.useContext(SplitflowDesignerContext) ?? getDefaultDesigner()
 
             injectors.style?.(designer)
-            injectors.element?.(elementName, undefined, designer)
+            injectors.element?.(elementName, undefined, undefined, designer)
 
             const className =
                 formatters.className?.(elementName, undefined, designer) ?? [].join(' ')
@@ -52,7 +52,7 @@ export function styled<T extends ReactStyle>(arg: unknown, styleDef: T): T {
 }
 
 interface Injectors {
-    element?: (elementName: string, variants: Variants, designer: SplitflowDesigner) => void
+    element?: (elementName: string, variants: Variants, preset: 'svg', designer: SplitflowDesigner) => void
     style?: (designer: SplitflowDesigner) => void
 }
 

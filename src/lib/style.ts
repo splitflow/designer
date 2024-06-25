@@ -77,7 +77,7 @@ export function createStyle(arg1: unknown, arg2?: unknown): any {
 }
 
 interface Injectors {
-    element?: (elementName: string, variants: Variants, designer: SplitflowDesigner) => void
+    element?: (elementName: string, variants: Variants, preset: 'svg', designer: SplitflowDesigner) => void
     style?: (designer: SplitflowDesigner) => void
 }
 
@@ -94,15 +94,18 @@ function createStyleProxy(
     return new Proxy(
         {},
         {
-            get: (_, property: string) => {
-                if (property === '_injectors') return injectors
-                if (property === '_formatters') return formatters
+            get: (_, propertyName: string) => {
+                if (propertyName === '_injectors') return injectors
+                if (propertyName === '_formatters') return formatters
 
-                const elementName = property
+                const tokens = propertyName.split('$')
+                const elementName = tokens[0]
+                const preset = tokens[1] === 'svg' ? 'svg' : undefined
+
                 return (variants?: Variants) => {
                     designer ??= getDefaultDesigner()
                     injectors.style?.(designer)
-                    injectors.element?.(elementName, variants, designer)
+                    injectors.element?.(elementName, variants, preset, designer)
 
                     return [
                         ...(formatters.className?.(elementName, variants, designer) ?? []),

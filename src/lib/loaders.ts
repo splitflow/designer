@@ -41,6 +41,10 @@ export async function loadRemoteSplitflowDesignerBundle(
     const { accountId } = kit.config
     const { podId, podType } = kit.pod
 
+    let getThemeResult: GetThemeResult
+    let getStyleDesignResult: GetDesignResult
+    let getConfigDesignResult: GetDesignResult
+
     if (accountId && podId && podType) {
         const action1: GetDesignAction = {
             type: 'get-design',
@@ -60,21 +64,25 @@ export async function loadRemoteSplitflowDesignerBundle(
         }
         const response2 = fetch(actionRequestX(action2, GetDesignEndpoint))
 
-        const action3: GetThemeAction = { type: 'get-theme', accountId }
-        const response3 = fetch(actionRequestX(action3, GetThemeEndpoint))
-
-        const [getStyleDesignResult, getConfigDesignResult, getThemeResult] = await Promise.all([
+        const [_getStyleDesignResult, _getConfigDesignResult] = await Promise.all([
             getResult<GetDesignResult>(response1),
-            getResult<GetDesignResult>(response2),
-            getResult<GetThemeResult>(response3)
+            getResult<GetDesignResult>(response2)
         ])
 
-        return {
-            designerConfig: kit.config,
-            getStyleDesignResult,
-            getConfigDesignResult,
-            getThemeResult
-        }
+        getStyleDesignResult = _getStyleDesignResult
+        getConfigDesignResult = _getConfigDesignResult
     }
-    return { designerConfig: kit.config }
+
+    if (accountId) {
+        const action: GetThemeAction = { type: 'get-theme', accountId }
+        const response = fetch(actionRequestX(action, GetThemeEndpoint))
+        getThemeResult = await getResult<GetThemeResult>(response)
+    }
+
+    return {
+        designerConfig: kit.config,
+        getStyleDesignResult,
+        getConfigDesignResult,
+        getThemeResult
+    }
 }

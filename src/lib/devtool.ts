@@ -12,7 +12,7 @@ export function importDevtool() {
         (importPromise = import(
             /* webpackIgnore: true */
             // @ts-ignore
-            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-2.1.x.js'
+            'https://pub-79a464feabb445aa8b15f14f4bbdaeb0.r2.dev/devtool-2.2.x.js'
             //'http://localhost:3000/index.js'
         ))
     )
@@ -42,6 +42,7 @@ export interface ComponentNode {
 export interface ElementNode {
     elementName: string
     variantName: string
+    preset?: 'svg'
 }
 
 export interface OptionNode {
