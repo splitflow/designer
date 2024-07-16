@@ -1,109 +1,122 @@
-# SpliFlow
+# SpliFlow designer
 
-[SplitFlow](https://splitflow.io) is a no-code editor which allows designers to style web based applications.
+[SplitFlow designer](https://splitflow.io/designer) is a no-code editor which allows designers to style and configure web based applications.
 
-- :heart: Built for UI designers.
+- :heart: No-code for UI designers and developers.
 - :sparkles: JS Framework agnostic.
 - :snowflake: Embedded into your app.
 - :zap: Real time styling.
 
-![SplitFlow style editor](https://github.com/splitflow/splitflow/blob/master/public/editor.png?raw=true)
+![SplitFlow designer](https://github.com/splitflow/designer/blob/master/public/editor.png?raw=true)
 
 ## Demo and example
 
-Visit [splitflow.io](https://splitflow.io) to play with the style editor or check the [example](https://github.com/splitflow/designer/tree/master/src/example) page.
+Visit [splitflow.io](https://splitflow.io/designer) to play with the embedded designer tool. Check out the [plain JS example](https://github.com/splitflow/designer/tree/master/src/example) or the [React example](https://github.com/splitflow/react/tree/master/example) for a NextJS integration with SSR support.
 
 ## Getting started
 
-### Install SplitFlow
+The SplitFlow designer API can be used with your framework of choice. Below is a minimal React integration.
 
 ```
 npm install @splitflow/designer
 ```
 
-### Initialize the SplitFlow designer
+Initialize the SplitFlow designer with the devtool enabled
 
 ```ts
 import { initializeSplitflowDesigner } from '@splitflow/designer'
-...
+
 initializeSplitflowDesigner({ devtool: true })
 ```
 
-### Register your component classes
-
-```ts
-import { createStyle } from '@splitflow/designer';
-...
-const style = createStyle('MyComponentName');
-...
-<div class={style.root()}>
-    <h1 class={style.title()}>Title</h1>
-</div>
-```
+Register your component classes
 
 Caution : The root element of a component must be styled with the `root` keyword.
 
-### Launch your app and start styling!
+```ts
+// MyComponent.tsx file
+import { useStyle } from './MyComponent.sf'
 
-SplitFlow style editor is displayed within your app as an overlay. Any element registered with the `createStyle` API can be styled.
+export function MyComponent() {
+    const style = useStyle()
+    
+    return (
+        <div className={style.root()}>
+            <h1 className={style.title()}>Title</h1>
+        </div>
+    )
+}
+```
 
-Caution : at this stage, your design is not persisted and will be discarded on page reload. Add your API key!
+Create the SF file skeleton. This file should not be edited. It will be updated later on with the SplitFlow CLI.
 
-## React styled-components built in support
-
-SplitFlow handles most of the styling, but sometimes developers need to have control on some CSS declarations. The most common use case are animations which remain within the developers responsibility.
+Caution : The component name should match the file name.
 
 ```ts
-import { createStyle } from '@splitflow/designer/react';
-import styled from 'my-preferred-styled-components-lib';
-...
-const Style = createStyle('MyComponentName', {
-    Root: 'div',
-    Title: styled.div({
-        fontWeight: 600
-    })
-});
-...
-<Style.Root>
-    <Style.Title>Title</Style.Title>
-</Style.Root>
-```
+// MyComponent.sf.ts file
+import { createStyle as _createStyle } from '@splitflow/designer'
+import { useStyle as _useStyle } from '@splitflow/designer/react'
 
-## Add your API key
+export function useStyle() {
+    return _useStyle(style)
+}
 
-### Request your project id
-
-Request a project id on https://splitflow.io/preview
-
-### Initialize SplitFlow
+export const style = _createStyle('MyComponent', {
+})
 
 ```
-initializeSplitflowDesigner({ projectId: '<my-project-id>', devtool: true })
+
+Launch your app and start designing!
+
+SplitFlow designer tool is displayed within your app as an overlay. Any element registered with the `createStyle` API can be styled or configured.
+
+Caution : at this stage, your design is not persisted and will be discarded on page reload.
+
+## Register your App
+
+To save your design, you will need to provide your _accountId_ and _appId_.
+Go to https://dash.splitflow.io and create a new Application.
+
+When initializing the designer, provide your ids (they can be found in the dashboard)
+
+```ts
+initializeSplitflowDesigner({
+    accountId: '<your-account-id>',
+    appId: '<your-app-id>',
+    devtool: true
+})
 ```
+
+Changes made with the devtool are now saved automatically.
 
 ## Going to production
 
-### Generate your css file
+With the `devtool: true` option, designs are loaded from SplitFlow servers. Before going to production, the designs must be synced into the source code using the CLI. Having the design files part of the source code makes refactoring easier.
 
-SplitFlow CLI allows to generate your app CSS.
-
-```
-npm install @splitflow/cli -D
-npx @splitflow/cli css --projectId=<my-project-id>
-```
-
-Alternatively, you can create a `splitflow.config.json` and run `npx @splitflow/cli css`
+Create a `splitflow.config.json` at the root of your project.
 
 ```json
 {
-    "projectId": "<my-project-id>"
+    "accountId": "<your-account-id>",
+    "appId": "<your-app-id>",
+    "framework": "react"
 }
 ```
 
-### Disable the designer devtool
+and run
+
+```bash
+npm install @splitflow/cli -D
+npx @splitflow/cli login
+npx @splitflow/cli style
+```
+
+The `devtool` option should now be set depending on the deployment environment.
 
 ```ts
-if (process.env.NODE_ENV === 'development')
-    initializeSplitflowDesigner({ devtool: true })
-}
+initializeSplitflowDesigner({
+    accountId: '<your-account-id>',
+    appId: 'your-app-id',
+    devtool: process.env.NODE_ENV === 'development' // or staging ...
+})
 ```
